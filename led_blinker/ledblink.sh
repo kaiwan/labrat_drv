@@ -10,7 +10,7 @@ GPIO=${GPIODIR}/gpio${LED_GPIO}
 
 # Don't need root, just need to belong to the 'gpio' group
 groups |grep -q -w "gpio" || {
-	echo "${name}: requires root."
+	echo "${name}: require to belong to group 'gpio' (preferred) or run as root."
 	exit 1
 }
 [ ! -d ${GPIO} ] && echo ${LED_GPIO} > ${GPIODIR}/export
