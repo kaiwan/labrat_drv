@@ -8,7 +8,8 @@ LED_GPIO=18
 GPIODIR=/sys/class/gpio
 GPIO=${GPIODIR}/gpio${LED_GPIO}
 
-[ $(id -u) -ne 0 ] && {
+# Don't need root, just need to belong to the 'gpio' group
+groups |grep -q -w "gpio" || {
 	echo "${name}: requires root."
 	exit 1
 }
@@ -17,10 +18,9 @@ GPIO=${GPIODIR}/gpio${LED_GPIO}
 	echo "${name}: creating/exporting gpio dir failed."
 	exit 1
 }
-
 # 'Signal handler' to run on exit, ^C (SIGINT) or ^\ (SIGQUIT)
 trap \
-   'echo 18 > ${GPIODIR}/unexport ; exit 0' \
+   'echo 0 > ${GPIO}/value ; exit 0' \
    EXIT INT QUIT
 
 echo out > ${GPIO}/direction
