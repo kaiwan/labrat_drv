@@ -28,8 +28,10 @@ echo out > ${GPIO}/direction
 while [ true ]
 do
 	echo 1 > ${GPIO}/value
+	echo -n +
 	sleep 1
 	echo 0 > ${GPIO}/value
+	echo -n -
 	sleep 1
 done
 exit 0
