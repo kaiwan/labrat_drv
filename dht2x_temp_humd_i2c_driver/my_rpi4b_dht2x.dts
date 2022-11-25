@@ -250,8 +250,8 @@
 			reg = <0x7e804000 0x1000>;
 			phandle = <0x36>;
 
-			/* KNB: added node for DHT2x temp/humd sensor chip, to match my driver
-			 * Also note it's added in the right place, under the relevant I2C node
+			/* KNB: added node for DHT2x temp/humd sensor chip, to match my driver.
+			 * Also ensure it's added in the right place, under the relevant I2C node
 			 */
 			dht2x: dht22@0 {
 				compatible = "knb,dht2x";
