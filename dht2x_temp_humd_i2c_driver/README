@@ -1,0 +1,3 @@
+README - for the DHT2x I2C temp+humd sensor chip driver:
+Read detailed notes in 
+ https://github.com/kaiwan/labrat_drv/tree/main/doc/RPi_Zero_W_driver_lab_notes.pdf
