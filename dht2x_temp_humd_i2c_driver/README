@@ -1,2 +1,4 @@
 README - for the DHT2x I2C temp+humd sensor chip driver:
 Read detailed notes in https://github.com/kaiwan/labrat_drv/blob/main/dht2x_temp_humd_i2c_driver/doc/I2C_DHT2x_temp_humd_sensor_driver_notes.pdf
+
+Also, realize that if changes are made to the driver it needs to be re-installed (make install).
