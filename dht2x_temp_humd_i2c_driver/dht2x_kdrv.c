@@ -23,7 +23,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/version.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #else
@@ -42,10 +42,9 @@ MODULE_LICENSE("Dual MIT/GPL");
 #define DHT2X_CMD_REG		0x71
 #define DHT2X_CMD_TRIGGER_MSMT	0xAC
 
+#define IS_BIT_SET(var, pos) ((var) & (1<<(pos)))
 
-#define IS_BIT_SET(var,pos) ((var) & (1<<(pos)))
-
-#define GET_SHOW_STATUS(client,stat) do { \
+#define GET_SHOW_STATUS(client, stat) do { \
 	stat = i2c_smbus_read_byte_data(client, DHT2X_CMD_REG); \
 	dev_dbg(&client->dev, "chip status (0x%x): calibration[b3]: 0x%x   busy[b7]: 0x%x\n", \
 		stat, IS_BIT_SET((stat), 3), IS_BIT_SET((stat), 7)); \
@@ -56,10 +55,11 @@ struct dht2x_data {
 	struct mutex lock;
 	unsigned char buf[8];
 	int crc_wrong;
-} *gdata;
+};
+static struct dht2x_data *gdata;
 
 static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
-				  unsigned char length, unsigned char *buf)
+				 unsigned char length, unsigned char *buf)
 {
 	struct i2c_msg msgs[] = {
 		{		/* setup read ptr */
@@ -71,8 +71,7 @@ static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
 		 .addr = client->addr,
 		 .flags = I2C_M_RD,
 		 .len = length,
-		 .buf = buf
-		 },
+		 .buf = buf},
 	};
 
 	if ((i2c_transfer(client->adapter, msgs, 2)) != 2) {
@@ -85,21 +84,21 @@ static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
 
 /* Src: https://stackoverflow.com/a/51773839/779269
  */
-u8 gencrc8(u8 *data, size_t len)
+static u8 gencrc8(u8 *data, size_t len)
 {
-    u8 crc = 0xff;
-    size_t i, j;
+	u8 crc = 0xff;
+	size_t i, j;
 
-    for (i = 0; i < len; i++) {
-        crc ^= data[i];
-        for (j = 0; j < 8; j++) {
-            if ((crc & 0x80) != 0)
-                crc = (uint8_t)((crc << 1) ^ 0x31);
-            else
-                crc <<= 1;
-        }
-    }
-    return crc;
+	for (i = 0; i < len; i++) {
+		crc ^= data[i];
+		for (j = 0; j < 8; j++) {
+			if ((crc & 0x80) != 0)
+				crc = (uint8_t) ((crc << 1) ^ 0x31);
+			else
+				crc <<= 1;
+		}
+	}
+	return crc;
 }
 
 #if 0
@@ -121,19 +120,19 @@ static long dht2x_read_sensors(struct device *dev)
 	char str_crc[3];
 
 	/* Check chip is calibrated
-	 * Datasheet:
-	   1.After power-on, wait no less than 100ms. Before reading the
-	   temperature and humidity value, get a byte of status
-	   word by sending 0x71. If the status word and 0x18 are not equal to 0x18
-	   , initialize the 0x1B, 0x1C, 0x1E registers ...
+	 * Datasheet (pg 10, 11):
+	 1.After power-on, wait no less than 100ms. Before reading the
+	 temperature and humidity value, get a byte of status
+	 word by sending 0x71. If the status word and 0x18 are not equal to 0x18
+	 , initialize the 0x1B, 0x1C, 0x1E registers ...
 	 */
 	dev_dbg(dev, "Reading status reg and checking it's calibrated\n");
 	stat = i2c_smbus_read_byte_data(client, DHT2X_CMD_REG);
-	dev_dbg(dev, "stat=0x%x\n", stat); // get 0x1c; calib ok
+	dev_dbg(dev, "stat=0x%x\n", stat);	// get 0x18 or 0x1c; calib ok
 	//if (stat != 0x18) {
 	if (IS_BIT_SET(stat, 3) == 0) {
 		dev_info(dev,
-		"Initialization error, chip uncalibrated (stat=0x%x)...\n", stat);
+			 "Initialization error, chip uncalibrated (stat=0x%x)...\n", stat);
 		return -1;
 	}
 
@@ -174,7 +173,7 @@ static long dht2x_read_sensors(struct device *dev)
 	 * Datasheet:
 	 * The sensor needs time to collect. After the host sends a measurement
 	 * command (0xAC), delay more than 80 milliseconds before reading the
-	 * converted data and judging whether the returned status bit is normal. 
+	 * converted data and judging whether the returned status bit is normal.
 	 */
 	msleep(100);
 	print_hex_dump_bytes("gdata->buf:", DUMP_PREFIX_OFFSET, gdata->buf, len);
@@ -191,16 +190,16 @@ static long dht2x_read_sensors(struct device *dev)
 	str_crc[2] = '\0';
 	snprintf(str_crc, 3, "%x", gdata->buf[6]);
 	//pr_debug("str_crc=%s\n", str_crc);
-	if (!kstrtou8(str_crc, 16, &crc_obtained)) { // ret 0 on success
-	#if 0
-		/* kernel's crc8() on RPi requires loading module crc8!
+	if (!kstrtou8(str_crc, 16, &crc_obtained)) {	// ret 0 on success
+#if 0
+		/* The kernel's crc8() API on RPi requires loading module crc8!
 		 *  u8 crc8(const u8 table[CRC8_TABLE_SIZE], u8 *pdata, size_t nbytes, u8 crc);
-		 * doesn't seem to work?
+		 * -still doesn't seem to work?
 		 */
 		u8 crc = crc8(dht2x_crc8_table, gdata->buf, 6, CRC8_INIT_VALUE);
-	#else
+#else
 		u8 crc = gencrc8(gdata->buf, 6);
-	#endif
+#endif
 		dev_dbg(dev, "crc obtd=0x%x crc=0x%x\n", crc_obtained, crc);
 		if (crc != crc_obtained) {
 			dev_info(dev, "CRC checksum error!\n");
@@ -211,8 +210,7 @@ static long dht2x_read_sensors(struct device *dev)
 	return 0;
 }
 
-static ssize_t dht2x_humd_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
+static ssize_t dht2x_humd_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	int n;
 	s32 hraw, humidity;
@@ -221,26 +219,28 @@ static ssize_t dht2x_humd_show(struct device *dev,
 		return -EINTR;
 	dev_dbg(dev, "In the humidity 'show' method\n");
 	dht2x_read_sensors(dev);
-
 	if (gdata->crc_wrong) {
 		n = strscpy(buf, "CRC-err", 8);
 		mutex_unlock(&gdata->lock);
 		return n;
 	}
-
-	// Calculate humdity
+	// Calculate humdity; see datasheet
 	hraw = ((gdata->buf[3] & 0xf0) >> 4) + (gdata->buf[1] << 12) + (gdata->buf[2] << 4);
-	humidity = (100 * hraw)/1048;
+	humidity = (100 * hraw) / 1048;
 	dev_dbg(dev, "Rel-humidity=%d milli%%\n", humidity);
 
 	n = snprintf(buf, 10, "%d", humidity);
 	mutex_unlock(&gdata->lock);
 	return n;
 }
+
+/*
+ * The macro DEVICE_ATTR_XX(foo) generates the structure dev_attr_foo !
+ * So, here, it generates the struct dev_attr_dht2x_humd
+ */
 static DEVICE_ATTR_RO(dht2x_humd);	/* it's show callback is above.. */
 
-static ssize_t dht2x_temp_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
+static ssize_t dht2x_temp_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	int n;
 	s32 traw, temperature;
@@ -249,14 +249,12 @@ static ssize_t dht2x_temp_show(struct device *dev,
 		return -EINTR;
 	dev_dbg(dev, "In the temperature 'show' method\n");
 	dht2x_read_sensors(dev);
-
 	if (gdata->crc_wrong) {
 		n = strscpy(buf, "CRC-err", 8);
 		mutex_unlock(&gdata->lock);
 		return n;
 	}
-
-	// Calculate temperature (in millidegrees Celsius)
+	// Calculate temperature (in millidegrees Celsius); see datasheet
 	traw = ((gdata->buf[3] & 0xf) << 16) + (gdata->buf[4] << 8) + gdata->buf[5];
 	temperature = ((200 * traw) / 1048) - 50000;
 	dev_dbg(dev, "Temperature=%d milliC\n", temperature);
@@ -265,34 +263,40 @@ static ssize_t dht2x_temp_show(struct device *dev,
 	mutex_unlock(&gdata->lock);
 	return n;
 }
+
+/*
+ * The macro DEVICE_ATTR_XX(foo) generates the structure dev_attr_foo !
+ * So, here, it generates the struct dev_attr_dht2x_temp
+ */
 static DEVICE_ATTR_RO(dht2x_temp);	/* it's show callback is above.. */
 
 /* The probe method of our driver */
-static int dht2x_probe(struct i2c_client *client, // named as 'client' or 'dev'
-                const struct i2c_device_id *id)
+static int dht2x_probe(struct i2c_client *client,	// named as 'client' or 'dev'
+		       const struct i2c_device_id *id)
 {
 	int stat;
 	/*
-	 * first param: struct dht2x_client *client
-	 * the specialized structure for this kernel framework (eg. i2c, spi, usb,
+	 * first param: struct i2c_client *client
+	 * - the specialized structure for this kernel framework (eg. i2c, spi, usb,
 	 * pci, platform, etc); we often/usually extract the 'device' pointer from it..
 	 */
 	struct device *dev = &client->dev;
 
-	dev_info(dev, "hey, in probe! name=%s addr=0x%x\n",
-		client->name, client->addr);
+	dev_info(dev, "hey, in probe! name=%s addr=0x%x\n", client->name, client->addr);
 
 	/*
-	 * Your work in the probe() routine:
+	 * Your (typical) work in the probe() routine:
 	 * 1. Initialize the device
 	 * 2. Prepare driver work: allocate a structure for a suitable
 	 *    framework, allocate memory, map I/O memory, register interrupts...
 	 * 3. When everything is ready, register the new device to the framework
 	 */
-	if (!i2c_check_functionality(client->adapter, \
-		I2C_FUNC_I2C \
-		| I2C_FUNC_SMBUS_READ_BYTE_DATA | I2C_FUNC_SMBUS_WRITE_BYTE_DATA | \
-		I2C_FUNC_SMBUS_READ_WORD_DATA | I2C_FUNC_SMBUS_WRITE_WORD_DATA)) {
+	if (!i2c_check_functionality(client->adapter,
+				     I2C_FUNC_I2C
+				     | I2C_FUNC_SMBUS_READ_BYTE_DATA |
+				     I2C_FUNC_SMBUS_WRITE_BYTE_DATA |
+				     I2C_FUNC_SMBUS_READ_WORD_DATA |
+				     I2C_FUNC_SMBUS_WRITE_WORD_DATA)) {
 		dev_warn(dev, "i2c functionality issue?\n");
 		return -ENODEV;
 	}
@@ -320,8 +324,7 @@ static int dht2x_probe(struct i2c_client *client, // named as 'client' or 'dev'
 		dev_info(dev, "device_create_file 2 failed (%d), aborting now\n", stat);
 		return -stat;
 	}
-
-	// TODO - register with hwmon f/w
+	// TODO - register with a kernel framework; f.e. hwmon framework
 
 	return 0;
 }
@@ -336,26 +339,27 @@ static int dht2x_remove(struct i2c_client *client)
 }
 
 /*------- Matching the driver to the device ------------------
- * 3 different ways: 
+ * 3 different ways:
  *  by name : for platform & I2C devices
  *  by DT 'compatible' property : for devices on the Device Tree
  *                                 (ARM32, Aarch64, PPC, etc)
  *  by ACPI ID : for devices on ACPI tables (x86)
  */
 
-/* 
+/*
  * 1. By name : for platform & I2C devices
  * The <foo>_device_id structure:
  * where <foo> is typically one of:
  *  acpi_button, cnic, cpufreq, gameport, hid, i2c, ide_pci, ipmi, mbus, mmc,
  *  pnp, platform, scsi, sdio, serio, spi, tty, usb, usb_serial, vme
  */
-static const struct i2c_device_id dht2x_id[] = { 
-    {"knb,dht2x"},		/* matching by name; required for platform and i2c
-					devices & drivers */
-    // f.e.: { "pcf8563", 0 },
-    { } 
+static const struct i2c_device_id dht2x_id[] = {
+	{"knb,dht2x"},		/* matching by name; required for platform and i2c
+				 * devices & drivers */
+	// f.e.: { "pcf8563", 0 },
+	{}
 };
+
 MODULE_DEVICE_TABLE(i2c, dht2x_id);
 
 /* 2. By DT 'compatible' property : for devices on the Device Tree
@@ -363,57 +367,57 @@ MODULE_DEVICE_TABLE(i2c, dht2x_id);
  */
 #ifdef CONFIG_OF
 static const struct of_device_id dht2x_of_match[] = {
-	/* 
+	/*
 	 * ARM/PPC/etc: matching by DT 'compatible' property
 	 * 'compatible' property: one or more strings that define the specific
 	 * programming model for the device. This list of strings should be used
 	 * by a client program for device driver selection. The property value
 	 * consists of a concatenated list of null terminated strings,
-	 * from most specific to most general. 
+	 * from most specific to most general.
 	 */
-    { .compatible = "knb,dht2x"},
- // f.e.:   { .compatible = "nxp,pcf8563" },
-    {}
+	{.compatible = "knb,dht2x"},
+	// f.e.:   { .compatible = "nxp,pcf8563" },
+	{}
 };
+
 MODULE_DEVICE_TABLE(of, dht2x_of_match);
 #endif
 
 #if 0
 /* 3. By ACPI ID : for devices on ACPI tables (x86) */
 static const struct acpi_device_id dht2x_acpi_id[] = {
-						/* x86: matching by ACPI ID */
+	/* x86: matching by ACPI ID */
 	{"MMA7660", 0},
 	{}
 };
+
 MODULE_DEVICE_TABLE(acpi, dht2x_acpi_id);
 #endif
 
-
 /*
- * The dht2x_driver structure:
- * where dht2x is typically one of:
+ * The 'foo'_driver structure:
+ * where 'foo' is typically one of:
  *  acpi_button, cnic, cpufreq, gameport, hid, i2c, ide_pci, ipmi, mbus, mmc,
  *  pci, platform, pnp, scsi, sdio, serio, spi, tty, usb, usb_serial, vme
  */
 static struct i2c_driver dht2x_driver = {
-	.driver     = {
-		.name   = "dht2x",  /* platform and I2C use the
-					'name' field for the match and thus the bind between the
-					DT desc/device and driver */
-		.of_match_table = of_match_ptr(dht2x_of_match),
-	},
-	.probe      = dht2x_probe,		// invoked on driver/device bind
-	.remove     = dht2x_remove,	// optional; invoked on driver/device detach
-//	.disconnect = dht2x_disconnect,// optional; invoked on device disconnect
+	.driver = {
+		   .name = "dht2x",	/* platform and I2C use the
+					 * 'name' field for the match and thus the bind between the
+					 * DT desc/device and driver */
+		   .of_match_table = of_match_ptr(dht2x_of_match),
+		   },
+	.probe = dht2x_probe,	// invoked on driver/device bind
+	.remove = dht2x_remove,	// optional; invoked on driver/device detach
+//      .disconnect = dht2x_disconnect,// optional; invoked on device disconnect
 
-	.id_table   = dht2x_id,
+	.id_table = dht2x_id,
 
-//	.suspend    = dht2x_suspend,	// optional
-//	.resume     = dht2x_resume,	// optional
+//      .suspend    = dht2x_suspend,    // optional
+//      .resume     = dht2x_resume,     // optional
 };
 
-
-/* 
+/*
  * Init and Cleanup ::
  * Instead of manually specifiying the init and cleanup handlers in the
  * 'usual' manner, a lot of boilerplate is avoided (when nothing special is
@@ -421,7 +425,7 @@ static struct i2c_driver dht2x_driver = {
  *
  * module_foo_driver() macro;
  *
- * where dht2x is typically one of:
+ * where 'foo' is typically one of:
  *  acpi_button, cnic, cpufreq, gameport, hid, i2c, ide_pci, ipmi, mbus, mmc,
  *  pci, platform, pnp, scsi, sdio, serio, spi, tty, usb, usb_serial, vme
  * There are several foo_register_driver() APIs; see a list (for 5.4.0) here:
