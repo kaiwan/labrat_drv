@@ -20,18 +20,18 @@
 #include <linux/device.h>
 #include <linux/i2c.h>
 
-#define RENDER(n) \
-{ int i; \
-	for(i = 0; i < 7; i++) \
-       		SSD1306_Write(false,render[n][i]);\
-}
+#define RENDER(n) do { \
+	int i; \
+	for (i = 0; i < 7; i++) \
+		SSD1306_Write(false, render[n][i]); \
+} while (0)
 
-#define I2C_BUS_AVAILABLE   (          1 )	// I2C Bus available in our Raspberry Pi
-#define SLAVE_DEVICE_NAME   ( "oled_ssd1306" )	// Device and Driver Name
-#define SSD1306_SLAVE_ADDR  (       0x3C )	// SSD1306 OLED Slave Address
+#define I2C_BUS_AVAILABLE       1	// I2C Bus available in our Raspberry Pi
+#define SLAVE_DEVICE_NAME   "oled_ssd1306"	// Device and Driver Name
+#define SSD1306_SLAVE_ADDR   0x3C	// SSD1306 OLED Slave Address
 
-static struct i2c_adapter *oled_i2c_adapter = NULL;	// I2C Adapter Structure
-static struct i2c_client *etx_i2c_client_oled = NULL;	// I2C Cient Structure (In our case it is OLED)
+static struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
+static struct i2c_client *etx_i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
 static u8 render[10][7] = {
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
 	{0x00, 0x44, 0x42, 0x7f, 0x40, 0x40, 0x00},	// 1
@@ -46,76 +46,66 @@ static u8 render[10][7] = {
 };
 
 /*
-** This function writes the data into the I2C client
-**
-**  Arguments:
-**      buff -> buffer to be sent
-**      len  -> Length of the data
-**   
-*/
+ * This function writes the data into the I2C client
+ *  Arguments:
+ *      buff -> buffer to be sent
+ *      len  -> Length of the data
+ */
 static int I2C_Write(unsigned char *buf, unsigned int len)
 {
 	/*
-	 ** Sending Start condition, Slave address with R/W bit, 
-	 ** ACK/NACK and Stop condtions will be handled internally.
+	 * Sending Start condition, Slave address with R/W bit,
+	 * ACK/NACK and Stop condtions will be handled internally.
 	 */
 	int ret = i2c_master_send(etx_i2c_client_oled, buf, len);
-
 	return ret;
 }
 
 /*
-** This function reads one byte of the data from the I2C client
-**
-**  Arguments:
-**      out_buff -> buffer wherer the data to be copied
-**      len      -> Length of the data to be read
-** 
-*/
+ * This function reads one byte of the data from the I2C client
+ *  Arguments:
+ *      out_buff -> buffer wherer the data to be copied
+ *      len      -> Length of the data to be read
+ */
 static int I2C_Read(unsigned char *out_buf, unsigned int len)
 {
 	/*
-	 ** Sending Start condition, Slave address with R/W bit, 
-	 ** ACK/NACK and Stop condtions will be handled internally.
+	 * Sending Start condition, Slave address with R/W bit,
+	 * ACK/NACK and Stop condtions will be handled internally.
 	 */
 	int ret = i2c_master_recv(etx_i2c_client_oled, out_buf, len);
-
 	return ret;
 }
 
 /*
-** This function is specific to the SSD_1306 OLED.
-** This function sends the command/data to the OLED.
-**
-**  Arguments:
-**      is_cmd -> true = command, flase = data
-**      data   -> data to be written
-** 
-*/
+ * This function is specific to the SSD_1306 OLED.
+ * This function sends the command/data to the OLED.
+ *  Arguments:
+ *      is_cmd -> true = command, flase = data
+ *      data   -> data to be written
+ */
 static void SSD1306_Write(bool is_cmd, unsigned char data)
 {
 	unsigned char buf[2] = { 0 };
 	int ret;
 
 	/*
-	 ** First byte is always control byte. Data is followed after that.
-	 **
-	 ** There are two types of data in SSD_1306 OLED.
-	 ** 1. Command
-	 ** 2. Data
-	 **
-	 ** Control byte decides that the next byte is, command or data.
-	 **
-	 ** -------------------------------------------------------                        
-	 ** |              Control byte's | 6th bit  |   7th bit  |
-	 ** |-----------------------------|----------|------------|    
-	 ** |   Command                   |   0      |     0      |
-	 ** |-----------------------------|----------|------------|
-	 ** |   data                      |   1      |     0      |
-	 ** |-----------------------------|----------|------------|
-	 ** 
-	 ** Please refer the datasheet for more information. 
-	 **    
+	 * First byte is always control byte. Data is followed after that.
+	 *
+	 * There are two types of data in SSD_1306 OLED.
+	 * 1. Command
+	 * 2. Data
+	 *
+	 * Control byte decides that the next byte is, command or data.
+	 * -------------------------------------------------------
+	 * |              Control byte's | 6th bit  |   7th bit  |
+	 * |-----------------------------|----------|------------|
+	 * |   Command                   |   0      |     0      |
+	 * |-----------------------------|----------|------------|
+	 * |   data                      |   1      |     0      |
+	 * |-----------------------------|----------|------------|
+	 *
+	 * Please refer the datasheet for more information.
 	 */
 	if (is_cmd == true)
 		buf[0] = 0x00;
@@ -126,18 +116,14 @@ static void SSD1306_Write(bool is_cmd, unsigned char data)
 }
 
 /*
-** This function sends the commands that need to used to Initialize the OLED.
-**
-**  Arguments:
-**      none
-** 
-*/
+ * This function sends the commands that need to used to Initialize the OLED.
+ */
 static int SSD1306_DisplayInit(void)
 {
 	msleep(100);		// delay
 
 	/*
-	 ** Commands to initialize the SSD_1306 OLED Display
+	 * Commands to initialize the SSD_1306 OLED Display
 	 */
 	SSD1306_Write(true, 0xAE);	// Entire Display OFF
 	SSD1306_Write(true, 0xD5);	// Set Display Clock Divide Ratio and Oscillator Frequency
@@ -170,21 +156,20 @@ static int SSD1306_DisplayInit(void)
 }
 
 /*
-** This function Fills the complete OLED with this data byte.
-**
-**  Arguments:
-**      data  -> Data to be filled in the OLED
-** 
-*/
+ * This function Fills the complete OLED with this data byte.
+ *
+ *  Arguments:
+ *      data  -> Data to be filled in the OLED
+ *
+ */
 static void SSD1306_Fill(unsigned char data)
 {
 	unsigned int total = 128 * 8;	// 8 pages x 128 segments x 8 bits of data
 	unsigned int i = 0;
 
-	//Fill the Display
-	for (i = 0; i < total; i++) {
+	// Fill the Display
+	for (i = 0; i < total; i++)
 		SSD1306_Write(false, data);
-	}
 }
 
 ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
@@ -202,7 +187,7 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 	SSD1306_Write(true, 127);
 
 	SSD1306_Fill(0x00);
-	pr_info("Buff = %s count = %d\n", buf, count);
+	dev_dbg(dev, "Buff = %s count = %d\n", buf, count);
 	for (j = 0; j < count; j++) {
 		if (buf[j] < '0' || buf[j] > '9') {
 			SSD1306_Write(false, 0x00);
@@ -249,10 +234,9 @@ static int etx_oled_probe(struct i2c_client *client,
 
 static int ssd1306_remove(struct i2c_client *client)
 {
-	//fill the OLED with this data
-	SSD1306_Fill(0x00);
+	SSD1306_Fill(0x00);	//fill the OLED with this data
 	device_remove_file(&client->dev, &dev_attr_writechar);
-	pr_info("OLED Removed!!!\n");
+	pr_info("removed\n");
 	return 0;
 }
 
@@ -278,18 +262,13 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	 *    framework, allocate memory, map I/O memory, register interrupts...
 	 * 3. When everything is ready, register the new device to the framework
 	 */
+	SSD1306_DisplayInit();
+	SSD1306_Fill(0x00);	// fill the OLED with this data
+
+	device_create_file(&client->dev, &dev_attr_writechar);
 
 	return 0;
 }
-
-/*
-** Structure that has slave device id
-static const struct i2c_device_id etx_oled_id[] = {
-        { SLAVE_DEVICE_NAME, 0 },
-        { }
-};
-MODULE_DEVICE_TABLE(i2c, etx_oled_id);
-*/
 
 /*------- Matching the driver to the device ------------------
  * 3 different ways:
@@ -298,7 +277,6 @@ MODULE_DEVICE_TABLE(i2c, etx_oled_id);
  *                                 (ARM32, Aarch64, PPC, etc)
  *  by ACPI ID : for devices on ACPI tables (x86)
  */
-
 /*
  * 1. By name : for platform & I2C devices
  * The <foo>_device_id structure:
@@ -314,7 +292,6 @@ static const struct i2c_device_id ssd1306_id[] = {
 };
 
 MODULE_DEVICE_TABLE(i2c, ssd1306_id);
-
 /* 2. By DT 'compatible' property : for devices on the Device Tree
  *                                 (ARM32, Aarch64, PPC, etc)
  */
@@ -337,31 +314,28 @@ MODULE_DEVICE_TABLE(of, ssd1306_of_match);
 #endif
 
 /*
-** I2C driver Structure that has to be added to linux
-*/
+ * I2C driver Structure that has to be added to linux
+ */
 static struct i2c_driver ssd1306_driver = {
 	.driver = {
-		   .name = "ssd1306",
+		   .name = SLAVE_DEVICE_NAME,
 		   .owner = THIS_MODULE,
 		   },
 	.probe = ssd1306_probe,
 	.remove = ssd1306_remove,
 	.id_table = ssd1306_id,
-	//.probe          = etx_oled_probe,
-	//.remove         = etx_oled_remove,
-	//.id_table       = etx_oled_id,
 };
 
 /*
-** I2C Board Info strucutre
-*/
+ * I2C Board Info strucutre
+ */
 static struct i2c_board_info oled_i2c_board_info = {
 	I2C_BOARD_INFO(SLAVE_DEVICE_NAME, SSD1306_SLAVE_ADDR)
 };
 
 /*
-** Module Init function
-*/
+ * Module Init function
+ */
 static int __init oled_driver_init(void)
 {
 	int ret = -1;
@@ -370,6 +344,7 @@ static int __init oled_driver_init(void)
 	if (oled_i2c_adapter != NULL) {
 		etx_i2c_client_oled =
 		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
+
 		if (etx_i2c_client_oled != NULL) {
 			i2c_add_driver(&ssd1306_driver);
 			ret = 0;
@@ -382,8 +357,8 @@ static int __init oled_driver_init(void)
 }
 
 /*
-** Module Exit function
-*/
+ * Module Exit function
+ */
 static void __exit oled_driver_exit(void)
 {
 	i2c_unregister_device(etx_i2c_client_oled);
