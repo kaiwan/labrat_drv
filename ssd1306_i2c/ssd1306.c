@@ -1,6 +1,9 @@
 /*
  * ssd1306.c
-
+ *
+ * SSD1306 OLED display simple I2C driver
+ * For the Raspberry Pi family host devices...
+ *
  */
 #define pr_fmt(fmt) "%s:%s(): " fmt, KBUILD_MODNAME, __func__
 #define dev_fmt(fmt) "%s(): " fmt, __func__
@@ -20,18 +23,25 @@
 #include <linux/device.h>
 #include <linux/i2c.h>
 
-#define RENDER(n) do { \
-	int i; \
-	for (i = 0; i < 7; i++) \
-		SSD1306_Write(false, render[n][i]); \
-} while (0)
+MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan NB");
+MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver");
+MODULE_LICENSE("GPL");
 
-#define I2C_BUS_AVAILABLE       1	// I2C Bus available in our Raspberry Pi
+#define I2C_BUS_SSD1306       1	// I2C Bus available in our Raspberry Pi
 #define SLAVE_DEVICE_NAME   "oled_ssd1306"	// Device and Driver Name
 #define SSD1306_SLAVE_ADDR   0x3C	// SSD1306 OLED Slave Address
 
-static struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
-static struct i2c_client *etx_i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
+#define CMD	(true)
+#define DATA	(false)
+
+#define RENDER(n) do { \
+	int i; \
+	for (i = 0; i < 7; i++) \
+		SSD1306_Write(DATA, render[n][i]); \
+} while (0)
+
+struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
+static struct i2c_client *i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
 static u8 render[10][7] = {
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
 	{0x00, 0x44, 0x42, 0x7f, 0x40, 0x40, 0x00},	// 1
@@ -46,6 +56,32 @@ static u8 render[10][7] = {
 };
 
 /*
+ * How it works
+ * Take the digit '0'; the render[0][0] represents it's bit pattern:
+	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
+ * Each byte data is written vertically into a 'page'; there are 8 pages,
+ * page 0 to page 7. So 0x00 will go into page 0, 0x7f into page 1, 0x41
+ * to page 2, and so on...
+ * There are 128 columns, COL0 to COL127; each holds a bit. So 8 bits being
+ * a byte, we can have upto 128/8 = 16 characters per row. So the effective
+ * display resolution becomes 16x8 chars.
+ 
+  Lets draw out what digit '0' becomes:
+  (Legend: _ = 0 , X = 1)
+       C0 C1 C2 C3 C4 C5 C6 C7 C8 ... ...                        C127
+     { 00 7f 41 41 41 7f 00},	// 0
+   Pg0  _  _  _  _  _  _  _
+   Pg1  _  X  X  X  X  X  _
+   Pg2  _  X  _  _  _  X  _
+   Pg3  _  X  _  _  _  X  _
+   Pg4  _  X  _  _  _  X  _
+   Pg5  _  X  _  _  _  X  _
+   Pg6  _  X  _  _  _  X  _
+   Pg7  _  X  X  X  X  X  _
+
+ */
+
+/*
  * This function writes the data into the I2C client
  *  Arguments:
  *      buff -> buffer to be sent
@@ -57,7 +93,7 @@ static int I2C_Write(unsigned char *buf, unsigned int len)
 	 * Sending Start condition, Slave address with R/W bit,
 	 * ACK/NACK and Stop condtions will be handled internally.
 	 */
-	int ret = i2c_master_send(etx_i2c_client_oled, buf, len);
+	int ret = i2c_master_send(i2c_client_oled, buf, len);
 	return ret;
 }
 
@@ -73,7 +109,7 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
 	 * Sending Start condition, Slave address with R/W bit,
 	 * ACK/NACK and Stop condtions will be handled internally.
 	 */
-	int ret = i2c_master_recv(etx_i2c_client_oled, out_buf, len);
+	int ret = i2c_master_recv(i2c_client_oled, out_buf, len);
 	return ret;
 }
 
@@ -81,7 +117,8 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
  * This function is specific to the SSD_1306 OLED.
  * This function sends the command/data to the OLED.
  *  Arguments:
- *      is_cmd -> true = command, flase = data
+ *      is_cmd -> CMD (Bool true) => command,
+ *                DATA (Bool false) => data
  *      data   -> data to be written
  */
 static void SSD1306_Write(bool is_cmd, unsigned char data)
@@ -107,7 +144,7 @@ static void SSD1306_Write(bool is_cmd, unsigned char data)
 	 *
 	 * Please refer the datasheet for more information.
 	 */
-	if (is_cmd == true)
+	if (is_cmd == CMD)
 		buf[0] = 0x00;
 	else
 		buf[0] = 0x40;
@@ -125,32 +162,48 @@ static int SSD1306_DisplayInit(void)
 	/*
 	 * Commands to initialize the SSD_1306 OLED Display
 	 */
-	SSD1306_Write(true, 0xAE);	// Entire Display OFF
-	SSD1306_Write(true, 0xD5);	// Set Display Clock Divide Ratio and Oscillator Frequency
-	SSD1306_Write(true, 0x80);	// Default Setting for Display Clock Divide Ratio and Oscillator Frequency that is recommended
-	SSD1306_Write(true, 0xA8);	// Set Multiplex Ratio
-	SSD1306_Write(true, 0x3F);	// 64 COM lines
-	SSD1306_Write(true, 0xD3);	// Set display offset
-	SSD1306_Write(true, 0x00);	// 0 offset
-	SSD1306_Write(true, 0x40);	// Set first line as the start line of the display
-	SSD1306_Write(true, 0x8D);	// Charge pump
-	SSD1306_Write(true, 0x14);	// Enable charge dump during display on
-	SSD1306_Write(true, 0x20);	// Set memory addressing mode
-	SSD1306_Write(true, 0x00);	// Horizontal addressing mode
-	SSD1306_Write(true, 0xA1);	// Set segment remap with column address 127 mapped to segment 0
-	SSD1306_Write(true, 0xC8);	// Set com output scan direction, scan from com63 to com 0
-	SSD1306_Write(true, 0xDA);	// Set com pins hardware configuration
-	SSD1306_Write(true, 0x12);	// Alternative com pin configuration, disable com left/right remap
-	SSD1306_Write(true, 0x81);	// Set contrast control
-	SSD1306_Write(true, 0x80);	// Set Contrast to 128
-	SSD1306_Write(true, 0xD9);	// Set pre-charge period
-	SSD1306_Write(true, 0xF1);	// Phase 1 period of 15 DCLK, Phase 2 period of 1 DCLK
-	SSD1306_Write(true, 0xDB);	// Set Vcomh deselect level
-	SSD1306_Write(true, 0x20);	// Vcomh deselect level ~ 0.77 Vcc
-	SSD1306_Write(true, 0xA4);	// Entire display ON, resume to RAM content display
-	SSD1306_Write(true, 0xA6);	// Set Display in Normal Mode, 1 = ON, 0 = OFF
-	SSD1306_Write(true, 0x2E);	// Deactivate scroll
-	SSD1306_Write(true, 0xAF);	// Display ON in normal mode
+	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
+	SSD1306_Write(CMD, 0xD5);	// Set Display Clock Divide Ratio and Oscillator Frequency
+	SSD1306_Write(CMD, 0x80);	// Default Setting for Display Clock Divide Ratio and Oscillator Frequency that is recommended
+
+	SSD1306_Write(CMD, 0xA8);	// Set Multiplex Ratio
+	SSD1306_Write(CMD, 0x3F);	// 64 COM lines
+
+	SSD1306_Write(CMD, 0xD3);	// Set display offset
+	SSD1306_Write(CMD, 0x00);	// 0 offset
+
+	SSD1306_Write(CMD, 0x40);	// Set first line as the start line of the display
+	SSD1306_Write(CMD, 0x8D);	// Charge pump
+	SSD1306_Write(CMD, 0x14);	// Enable charge dump during display on
+
+	SSD1306_Write(CMD, 0x20);	// Set memory addressing mode
+	SSD1306_Write(CMD, 0x00);	// Horizontal addressing mode
+	/* From datasheet:
+	 * ... In horizontal addressing mode, after the display RAM is read/written,
+	 * the column address pointer is increased automatically by 1. If the column
+	 * address pointer reaches column end address, the column address pointer is
+	 * reset to column start address and page address pointer is increased by 1
+	 * ...
+	 */
+
+	SSD1306_Write(CMD, 0xA1);	// Set segment remap with column address 127 mapped to segment 0
+	SSD1306_Write(CMD, 0xC8);	// Set com output scan direction, scan from com63 to com 0
+	SSD1306_Write(CMD, 0xDA);	// Set com pins hardware configuration
+	SSD1306_Write(CMD, 0x12);	// Alternative com pin configuration, disable com left/right remap
+
+	SSD1306_Write(CMD, 0x81);	// Set contrast control
+	SSD1306_Write(CMD, 0x80);	// Set Contrast to 128
+
+	SSD1306_Write(CMD, 0xD9);	// Set pre-charge period
+	SSD1306_Write(CMD, 0xF1);	// Phase 1 period of 15 DCLK, Phase 2 period of 1 DCLK
+
+	SSD1306_Write(CMD, 0xDB);	// Set Vcomh deselect level
+	SSD1306_Write(CMD, 0x20);	// Vcomh deselect level ~ 0.77 Vcc
+
+	SSD1306_Write(CMD, 0xA4);	// Entire display ON, resume to RAM content display
+	SSD1306_Write(CMD, 0xA6);	// Set Display in Normal Mode, 1 = ON, 0 = OFF
+	SSD1306_Write(CMD, 0x2E);	// Deactivate scroll
+	SSD1306_Write(CMD, 0xAF);	// Display ON in normal mode
 
 	return 0;
 }
@@ -169,78 +222,52 @@ static void SSD1306_Fill(unsigned char data)
 
 	// Fill the Display
 	for (i = 0; i < total; i++)
-		SSD1306_Write(false, data);
+		SSD1306_Write(DATA, data);
 }
 
 ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
-	int j;
-	int num;
+	int j, num;
 
-	SSD1306_Write(true, 0x22);	// set page addr
-	SSD1306_Write(true, 0);
-	SSD1306_Write(true, 7);
+	SSD1306_Write(CMD, 0x22); // set page addr
+	SSD1306_Write(CMD, 0);     // start addr
+	SSD1306_Write(CMD, 7);     // end addr
 
-	SSD1306_Write(true, 0x21);
-	SSD1306_Write(true, 0);
-	SSD1306_Write(true, 127);
+	SSD1306_Write(CMD, 0x21); // set column address
+	SSD1306_Write(CMD, 0);     //  col start
+	SSD1306_Write(CMD, 127);   //  col end
 
 	SSD1306_Fill(0x00);
 	dev_dbg(dev, "Buff = %s count = %d\n", buf, count);
 	for (j = 0; j < count; j++) {
 		if (buf[j] < '0' || buf[j] > '9') {
-			SSD1306_Write(false, 0x00);
-			SSD1306_Write(false, 0x00);
-			SSD1306_Write(false, 0x00);
-			SSD1306_Write(false, 0x00);
-			SSD1306_Write(false, 0x00);
+			SSD1306_Write(DATA, 0x00);
+			SSD1306_Write(DATA, 0x00);
+			SSD1306_Write(DATA, 0x00);
+			SSD1306_Write(DATA, 0x00);
+			SSD1306_Write(DATA, 0x00);
 		} else {
 			num = buf[j] - '0';
 			RENDER(num);
 		}
 	}
-	SSD1306_Write(false, 0x00);
-	SSD1306_Write(false, 0x00);
+	SSD1306_Write(DATA, 0x00);
+	SSD1306_Write(DATA, 0x00);
+
 	return count;
 }
-
 DEVICE_ATTR_WO(writechar);
-/*
-** This function getting called when the slave has been found
-** Note : This will be called only once when we load the driver.
-static int etx_oled_probe(struct i2c_client *client,
-                         const struct i2c_device_id *id)
-{
-	int i;
-    	SSD1306_DisplayInit();
-    
-    	//fill the OLED with this data
-    	SSD1306_Fill(0x00);
-
-	RENDER(2);
-	RENDER(1);
-	RENDER(2);
-	RENDER(7);
-	RENDER(3);
-	RENDER(2);
-
-	device_create_file(&client->dev,&dev_attr_writechar);
-    	pr_info("OLED Probed!!!\n");
-    
-    	return 0;
-}
-*/
 
 static int ssd1306_remove(struct i2c_client *client)
 {
 	SSD1306_Fill(0x00);	//fill the OLED with this data
+	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
 	device_remove_file(&client->dev, &dev_attr_writechar);
 	pr_info("removed\n");
+
 	return 0;
 }
-
-//////////////////////////////////////////////////////////////////////
 
 /* The probe method of our driver */
 static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev'
@@ -333,19 +360,16 @@ static struct i2c_board_info oled_i2c_board_info = {
 	I2C_BOARD_INFO(SLAVE_DEVICE_NAME, SSD1306_SLAVE_ADDR)
 };
 
-/*
- * Module Init function
- */
 static int __init oled_driver_init(void)
 {
 	int ret = -1;
-	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_AVAILABLE);
+	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_SSD1306);
 
 	if (oled_i2c_adapter != NULL) {
-		etx_i2c_client_oled =
+		i2c_client_oled =
 		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
 
-		if (etx_i2c_client_oled != NULL) {
+		if (i2c_client_oled != NULL) {
 			i2c_add_driver(&ssd1306_driver);
 			ret = 0;
 		}
@@ -356,19 +380,12 @@ static int __init oled_driver_init(void)
 	return ret;
 }
 
-/*
- * Module Exit function
- */
 static void __exit oled_driver_exit(void)
 {
-	i2c_unregister_device(etx_i2c_client_oled);
+	i2c_unregister_device(i2c_client_oled);
 	i2c_del_driver(&ssd1306_driver);
-	pr_info("Driver Removed!!!\n");
+	pr_info("unloaded\n");
 }
 
 module_init(oled_driver_init);
 module_exit(oled_driver_exit);
-
-MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan NB");
-MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver");
-MODULE_LICENSE("GPL");
