@@ -34,15 +34,9 @@ MODULE_LICENSE("GPL");
 #define CMD	(true)
 #define DATA	(false)
 
-#define RENDER(n) do { \
-	int i; \
-	for (i = 0; i < 7; i++) \
-		SSD1306_Write(DATA, render[n][i]); \
-} while (0)
-
 struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
 static struct i2c_client *i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
-static u8 render[10][7] = {
+static u8 render[12][7] = {
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
 	{0x00, 0x44, 0x42, 0x7f, 0x40, 0x40, 0x00},	// 1
 	{0x00, 0x79, 0x49, 0x49, 0x49, 0x4f, 0x00},	// 2
@@ -52,11 +46,20 @@ static u8 render[10][7] = {
 	{0x00, 0x7f, 0x49, 0x49, 0x49, 0x79, 0x00},	// 6
 	{0x00, 0x01, 0x01, 0x01, 0x01, 0x7f, 0x00},	// 7
 	{0x00, 0x7f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 8
-	{0x00, 0x4f, 0x49, 0x49, 0x49, 0x7f, 0x00}	// 9
+	{0x00, 0x4f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 9
+	{0x00, 0x7f, 0x41, 0x41, 0x7f, 0x80, 0x80},	// a
+	{0x00, 0xff, 0x90, 0x90, 0x90, 0xf0, 0x00},	// b
 };
 
+#define RENDER(n) do { \
+	int i; \
+	dev_dbg(dev,"n=%d", n); \
+	for (i = 0; i < 7; i++) \
+		SSD1306_Write(DATA, render[n][i]); \
+} while (0)
+
 /*
- * How it works
+ * How it works - TOO (Theory Of Operation):
  * Take the digit '0'; the render[0][0] represents it's bit pattern:
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
  * Each byte data is written vertically into a 'page'; there are 8 pages,
@@ -66,6 +69,9 @@ static u8 render[10][7] = {
  * a byte, we can have upto 128/8 = 16 characters per row. So the effective
  * display resolution becomes 16x8 chars.
  
+   When writing out a byte, say 0x1f, the LSB nibble, i.e., 0xf = 1111, is
+   written *first*, then the MSB nibble 0x1 = 0001.
+
   Lets draw out what digit '0' becomes:
   (Legend: _ = 0 , X = 1)
        C0 C1 C2 C3 C4 C5 C6 C7 C8 ... ...                        C127
@@ -79,6 +85,20 @@ static u8 render[10][7] = {
    Pg6  _  X  _  _  _  X  _
    Pg7  _  X  X  X  X  X  _
 
+  Lets draw out what digit '5' becomes:
+  (Legend: _ = 0 , X = 1)
+       C0 C1 C2 C3 C4 C5 C6 C7 C8 ... ...                        C127
+     { 00 4f 49 49 49 79 00},	// 5
+   Pg0  _  X  X  X  X  X  _
+   Pg1  _  X  _  _  _  _  _
+   Pg2  _  X  _  _  _  _  _
+   Pg3  _  X  X  X  X  X  _
+   Pg4  _  _  _  _  _  _  _
+   Pg5  _  X  X  X  X  X  _
+   Pg6  _  _  _  _  _  X  _
+   Pg7  _  _  _  _  _  X  _
+
+ * Similary for the rest...
  */
 
 /*
@@ -239,16 +259,20 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 	SSD1306_Write(CMD, 127);   //  col end
 
 	SSD1306_Fill(0x00);
-	dev_dbg(dev, "Buff = %s count = %d\n", buf, count);
+	dev_dbg(dev, "buf = %s count = %d\n", buf, count);
 	for (j = 0; j < count; j++) {
-		if (buf[j] < '0' || buf[j] > '9') {
+		if (buf[j] < '0' || buf[j] > 'z') {
 			SSD1306_Write(DATA, 0x00);
 			SSD1306_Write(DATA, 0x00);
 			SSD1306_Write(DATA, 0x00);
 			SSD1306_Write(DATA, 0x00);
 			SSD1306_Write(DATA, 0x00);
 		} else {
+			dev_dbg(dev, "buf = %c(%d)\n", buf[j], (int)buf[j]);
 			num = buf[j] - '0';
+			if (buf[j] > '9')
+				num = buf[j] - 87; /* as 'a' is ASCII 97 and our 'render'
+				array has element 10 as 'a' */
 			RENDER(num);
 		}
 	}
