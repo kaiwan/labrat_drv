@@ -1,0 +1,46 @@
+#!/bin/sh
+# Chars: 18 chars in a row, 8 rows
+# BUT remember that if last char's a newline it could spill over!
+[ $(id -u) -ne 0 ] && {
+	echo "needs root."
+	exit 1
+}
+SYSFS_ENTRY=/sys/bus/i2c/devices/1-003c/writechar
+ROWNUM=/sys/bus/i2c/devices/1-003c/row_start
+MAXROW=7
+
+# write upto 18 chars max in a row
+d0="000 000 000 000 00"
+d1="111 111 111 111 11"
+d2="222 222 222 222 22"
+d3="333 333 333 333 33"
+d4="444 444 444 444 44"
+d5="555 555 555 555 55"
+d6="666 666 666 666 66"
+d7="777 777 777 777 77"
+
+echo 0 > ${ROWNUM}
+echo -n "${d0}" > ${SYSFS_ENTRY}
+
+echo 1 > ${ROWNUM}
+echo -n "${d1}" > ${SYSFS_ENTRY}
+
+echo 2 > ${ROWNUM}
+echo -n "${d2}" > ${SYSFS_ENTRY}
+
+echo 3 > ${ROWNUM}
+echo -n "${d3}" > ${SYSFS_ENTRY}
+
+echo 4 > ${ROWNUM}
+echo -n "${d4}" > ${SYSFS_ENTRY}
+
+echo 5 > ${ROWNUM}
+echo -n "${d5}" > ${SYSFS_ENTRY}
+
+echo 6 > ${ROWNUM}
+echo -n "${d6}" > ${SYSFS_ENTRY}
+
+echo 7 > ${ROWNUM}
+echo -n "${d7}" > ${SYSFS_ENTRY}
+
+exit 0
