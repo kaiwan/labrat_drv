@@ -57,7 +57,6 @@ static u8 render[36][7] = {
 
 #define RENDER(n) do { \
 	int i; \
-	dev_dbg(dev,"n=%d", n); \
 	for (i = 0; i < 7; i++) \
 		SSD1306_Write(DATA, render[n][i]); \
 } while (0)
@@ -260,24 +259,23 @@ static void SSD1306_Fill(unsigned char data)
 		SSD1306_Write(DATA, data);
 }
 
-static u8 row_start, row_end = 6, col_start, col_end = 127;
+#define MAX_ROW_PAGE	  7
+#define MAX_COL		127
+static u8 row_start, row_end = MAX_ROW_PAGE, col_start, col_end = MAX_COL;
 
 static ssize_t col_end_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int n = (int)count;
-	u8 prev_colend;
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
 
-	prev_colend = col_end;
-	kstrtou8(buf, 0, &col_end);	/* update it! */
-	if (col_start > 127) {
+	if (kstrtou8(buf, 0, &col_end) < 0)	/* update it! */
+		return -ERANGE;
+	if (col_start > MAX_COL) {
 		pr_info("trying to set invalid value (%d) for col_end\n"
-			" [allowed range: %d-%d]; resetting to previous (%d)\n",
-			col_start, 0, 127, prev_colend);
-		col_end = prev_colend;
+			" [allowed range: %d-%d]\n", col_start, 0, MAX_COL);
 		n = -EFAULT;
 	}
 	dev_dbg(dev, "col_end = %u\n", col_end);
@@ -306,18 +304,15 @@ static ssize_t col_start_store(struct device *dev, struct device_attribute *attr
 			const char *buf, size_t count)
 {
 	int n = (int)count;
-	u8 prev_colstart;
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
 
-	prev_colstart = col_start;
-	kstrtou8(buf, 0, &col_start);	/* update it! */
-	if (col_start > 6) {
+	if (kstrtou8(buf, 0, &col_start) < 0)	/* update it! */
+		return -ERANGE;
+	if (col_start > MAX_COL) {
 		pr_info("trying to set invalid value (%d) for col_start\n"
-			" [allowed range: %d-%d]; resetting to previous (%d)\n",
-			col_start, 0, 6, prev_colstart);
-		col_start = prev_colstart;
+			" [allowed range: %d-%d]\n", col_start, 0, MAX_COL);
 		n = -EFAULT;
 	}
 	dev_dbg(dev, "col_start = %u\n", col_start);
@@ -341,23 +336,20 @@ static ssize_t col_start_show(struct device *dev,
  */
 static DEVICE_ATTR_RW(col_start);	/* it's callbacks are above.. */
 // TODO- use DEVICE_ULONG_ATTR() ?
-//////////////////
+
 static ssize_t row_end_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int n = (int)count;
-	u8 prev_rowend;
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
 
-	prev_rowend = row_end;
-	kstrtou8(buf, 0, &row_end);	/* update it! */
-	if (row_end > 6) {
+	if (kstrtou8(buf, 0, &row_end) < 0)	/* update it! */
+		return -ERANGE;
+	if (row_end > MAX_ROW_PAGE) {
 		pr_info("trying to set invalid value (%d) for row_end\n"
-			" [allowed range: %d-%d]; resetting to previous (%d)\n",
-			row_end, 0, 6, prev_rowend);
-		row_end = prev_rowend;
+			" [allowed range: %d-%d]\n", row_end, 0, MAX_ROW_PAGE);
 		n = -EFAULT;
 	}
 	dev_dbg(dev, "row_end = %u\n", row_end);
@@ -386,22 +378,21 @@ static ssize_t row_start_store(struct device *dev, struct device_attribute *attr
 			const char *buf, size_t count)
 {
 	int n = (int)count;
-	u8 prev_rowstart;
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
 
-	prev_rowstart = row_start;
-	kstrtou8(buf, 0, &row_start);	/* update it! */
-	if (row_start > 6) {
+	if (kstrtou8(buf, 0, &row_start) < 0)	/* update it! */
+		return -ERANGE;
+	if (row_start > MAX_ROW_PAGE) {
 		pr_info("trying to set invalid value (%d) for row_start\n"
-			" [allowed range: %d-%d]; resetting to previous (%d)\n",
-			row_start, 0, 6, prev_rowstart);
-		row_start = prev_rowstart;
+			" [allowed range: %d-%d]\n",
+			row_start, 0, MAX_ROW_PAGE);
 		n = -EFAULT;
 	}
 	dev_dbg(dev, "row_start = %u\n", row_start);
 	mutex_unlock(&mtx);
+
 	return n;
 }
 static ssize_t row_start_show(struct device *dev,
@@ -426,23 +417,26 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int j, num;
-#define CMD_SET_PAGE_ROW_0TO6	0x22
+#define CMD_SET_PAGE_ROW_0TO7	0x22
 #define CMD_SET_COL_0TO127	0x21
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
 
-	// set page addr: ~ like row #; there r 7 of 'em(0-6)
-	SSD1306_Write(CMD, CMD_SET_PAGE_ROW_0TO6);
+	dev_dbg(dev, "coords:(%u,%u) to (%u,%u)\n",
+		row_start, col_start, row_end, col_end);
+
+	// set page addr: ~ like row #; there r 8 of 'em(0-7)
+	SSD1306_Write(CMD, CMD_SET_PAGE_ROW_0TO7);
 	SSD1306_Write(CMD, row_start);     // row start addr
 	SSD1306_Write(CMD, row_end);       // row end addr
 
-	// set column address
+	// set column address [0-127]
 	SSD1306_Write(CMD, CMD_SET_COL_0TO127);
-	SSD1306_Write(CMD, col_start);     //  col start
-	SSD1306_Write(CMD, col_end);       //  col end
+	SSD1306_Write(CMD, col_start);     //  col start addr
+	SSD1306_Write(CMD, col_end);       //  col end addr
 
-	SSD1306_Fill(0x00);
+//	SSD1306_Fill(0x00);
 	dev_dbg(dev, "buf = %s count = %d\n", buf, count);
 	for (j = 0; j < count; j++) {
 		if (buf[j] < '0' || buf[j] > 'z') {
@@ -460,8 +454,8 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			RENDER(num);
 		}
 	}
-	SSD1306_Write(DATA, 0x00);
-	SSD1306_Write(DATA, 0x00);
+//	SSD1306_Write(DATA, 0x00);
+//	SSD1306_Write(DATA, 0x00);
 	mutex_unlock(&mtx);
 
 	return count;
@@ -558,6 +552,7 @@ MODULE_DEVICE_TABLE(i2c, ssd1306_id);
  *                                 (ARM32, Aarch64, PPC, etc)
  */
 #ifdef CONFIG_OF
+/* DT isn't being used as of now at least ... */
 static const struct of_device_id ssd1306_of_match[] = {
 	/*
 	 * ARM/PPC/etc: matching by DT 'compatible' property
