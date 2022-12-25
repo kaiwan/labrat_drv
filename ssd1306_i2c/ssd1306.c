@@ -36,6 +36,9 @@ MODULE_LICENSE("GPL");
 
 struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
 static struct i2c_client *i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
+/* Use the XWin bitmap app to render the characters.
+ * Keep last col zero to, in effect, have some spacing before the next char
+ */
 static u8 render[36][7] = {
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
 	{0x00, 0x44, 0x42, 0x7f, 0x40, 0x40, 0x00},	// 1
@@ -47,10 +50,9 @@ static u8 render[36][7] = {
 	{0x00, 0x01, 0x01, 0x01, 0x01, 0x7f, 0x00},	// 7
 	{0x00, 0x7f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 8
 	{0x00, 0x4f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 9
-//	{0x00, 0x3f, 0x41, 0x41, 0x7f, 0x80, 0x80},	// a
-	{0x00, 0x00, 0xf1, 0x91, 0x91, 0x91, 0xfe},	// a
+	{0x00, 0x00, 0xf1, 0x91, 0x91, 0xfe, 0x00},	// a
 	{0xff, 0x88, 0x88, 0x88, 0x88, 0x70, 0x00},	// b :correct!
-	{0x00, 0xf8, 0x91, 0x91, 0x91, 0x91, 0x00},	// c
+	{0x00, 0xf8, 0x88, 0x88, 0x88, 0x88, 0x00},	// c
 };
 
 #define RENDER(n) do { \
@@ -74,7 +76,7 @@ static u8 render[36][7] = {
    When writing out a byte, say 0x8f, the LSB nibble, i.e., 0xf = 1111, is
    written *first*, then the MSB nibble 0x8 = 1000. BUT it seems to render from
    bottom-to-top; so 0x8f it looks like this:
-   (Legend: _ = 0 (empty, no pixel) , | = 1i (a single pixel))
+   (Legend: _ = 0 (empty, no pixel) , | = 1 (a single pixel))
   1 |
   1 |
   1 |
@@ -97,18 +99,18 @@ static u8 render[36][7] = {
    Pg6  _  X  _  _  _  X  _
    Pg7  _  X  X  X  X  X  _
 
-  Lets draw out what digit '5' becomes:
+  Lets draw out what 'b' becomes:
   (Legend: _ = 0 , X = 1)
        C0 C1 C2 C3 C4 C5 C6 C7 C8 ... ...                        C127
-     { 00 4f 49 49 49 79 00},	// 5
-   Pg0  _  X  X  X  X  X  _
-   Pg1  _  X  _  _  _  _  _
-   Pg2  _  X  _  _  _  _  _
-   Pg3  _  X  X  X  X  X  _
-   Pg4  _  _  _  _  _  _  _
-   Pg5  _  X  X  X  X  X  _
-   Pg6  _  _  _  _  _  X  _
-   Pg7  _  _  _  _  _  X  _
+     { ff 88 88 88 88 70 00},	// b :correct!
+   Pg0  X  _  _  _  _  _  _
+   Pg1  X  _  _  _  _  _  _
+   Pg2  X  _  _  _  _  _  _
+   Pg3  X  X  X  X  X  _  _
+   Pg4  X  _  _  _  _  X  _
+   Pg5  X  _  _  _  _  X  _
+   Pg6  X  _  _  _  _  X  _
+   Pg7  X  X  X  X  X  _  _
 
  * Similary for the rest...
  */
@@ -261,13 +263,17 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int j, num;
+#define CMD_SET_PAGE_ROW_0TO6	0x22
+#define CMD_SET_COL_0TO127	0x21
 
-	SSD1306_Write(CMD, 0x22); // set page addr
-	SSD1306_Write(CMD, 0);     // start addr
+	// set page addr: ~ like row #; there r 7 of 'em(0-6)
+	SSD1306_Write(CMD, CMD_SET_PAGE_ROW_0TO6);
+	SSD1306_Write(CMD, 4);     // start addr
 	SSD1306_Write(CMD, 7);     // end addr
 
-	SSD1306_Write(CMD, 0x21); // set column address
-	SSD1306_Write(CMD, 0);     //  col start
+	// set column address
+	SSD1306_Write(CMD, CMD_SET_COL_0TO127);
+	SSD1306_Write(CMD, 64);     //  col start
 	SSD1306_Write(CMD, 127);   //  col end
 
 	SSD1306_Fill(0x00);
