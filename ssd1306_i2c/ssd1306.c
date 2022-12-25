@@ -4,6 +4,9 @@
  * SSD1306 OLED display simple I2C driver
  * For the Raspberry Pi family host devices...
  *
+ * TODO-
+ *  [ ] clear full screen
+ *  [ ] clear curr row
  */
 #define pr_fmt(fmt) "%s:%s(): " fmt, KBUILD_MODNAME, __func__
 #define dev_fmt(fmt) "%s(): " fmt, __func__
@@ -34,8 +37,8 @@ MODULE_LICENSE("GPL");
 #define CMD	(true)
 #define DATA	(false)
 
-struct i2c_adapter *oled_i2c_adapter;	// I2C Adapter Structure
-static struct i2c_client *i2c_client_oled;	// I2C Cient Structure (In our case it is OLED)
+static struct i2c_adapter *oled_i2c_adapter;	// I2C adapter Structure
+static struct i2c_client *i2c_client_oled;	// I2C client Structure (the SSD1306 OLED)
 /* Use the XWin bitmap app to render the characters.
  * Keep last col zero to, in effect, have some spacing before the next char
  */
@@ -71,7 +74,7 @@ static u8 render[36][7] = {
  * There are 128 columns, COL0 to COL127; each holds a bit. So 8 bits being
  * a byte, we can have upto 128/8 = 16 characters per row. So the effective
  * display resolution becomes 16x8 chars.
- 
+
    When writing out a byte, say 0x8f, the LSB nibble, i.e., 0xf = 1111, is
    written *first*, then the MSB nibble 0x8 = 1000. BUT it seems to render from
    bottom-to-top; so 0x8f it looks like this:
@@ -131,6 +134,8 @@ static int I2C_Write(unsigned char *buf, unsigned int len)
 	return ret;
 }
 
+#if 0
+// func curr unused
 /*
  * This function reads one byte of the data from the I2C client
  *  Arguments:
@@ -146,6 +151,7 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
 	int ret = i2c_master_recv(i2c_client_oled, out_buf, len);
 	return ret;
 }
+#endif
 
 /*
  * This function is specific to the SSD_1306 OLED.
@@ -158,7 +164,6 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
 static void SSD1306_Write(bool is_cmd, unsigned char data)
 {
 	unsigned char buf[2] = { 0 };
-	int ret;
 
 	/*
 	 * First byte is always control byte. Data is followed after that.
@@ -183,7 +188,7 @@ static void SSD1306_Write(bool is_cmd, unsigned char data)
 	else
 		buf[0] = 0x40;
 	buf[1] = data;
-	ret = I2C_Write(buf, 2);
+	I2C_Write(buf, 2);
 }
 
 /*
@@ -413,7 +418,7 @@ static ssize_t row_start_show(struct device *dev,
 static DEVICE_ATTR_RW(row_start);	/* it's callbacks are above.. */
 // TODO- use DEVICE_ULONG_ATTR() ?
 
-ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
+static ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int j, num;
@@ -460,7 +465,7 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 
 	return count;
 }
-DEVICE_ATTR_WO(writechar);
+static DEVICE_ATTR_WO(writechar);
 
 static int ssd1306_remove(struct i2c_client *client)
 {
@@ -501,23 +506,28 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	SSD1306_Fill(0x00);	// fill the OLED with this data
 
 	// Create the sysfs pseudofiles
-	if ((ret = device_create_file(&client->dev, &dev_attr_writechar)) < 0) {
+	ret = device_create_file(&client->dev, &dev_attr_writechar);
+	if (ret < 0) {
 		dev_info(dev, "creating sysfs entry writechar failed");
 		return -ret;
 	}
-	if ((ret = device_create_file(&client->dev, &dev_attr_row_start)) < 0) {
+	ret = device_create_file(&client->dev, &dev_attr_row_start);
+	if (ret < 0) {
 		dev_info(dev, "creating sysfs entry rowstart failed");
 		return -ret;
 	}
-	if ((ret = device_create_file(&client->dev, &dev_attr_row_end)) < 0) {
+	ret = device_create_file(&client->dev, &dev_attr_row_end);
+	if (ret < 0) {
 		dev_info(dev, "creating sysfs entry rowend failed");
 		return -ret;
 	}
-	if ((ret = device_create_file(&client->dev, &dev_attr_col_start)) < 0) {
+	ret = device_create_file(&client->dev, &dev_attr_col_start);
+	if (ret < 0) {
 		dev_info(dev, "creating sysfs entry rowstart failed");
 		return -ret;
 	}
-	if ((ret = device_create_file(&client->dev, &dev_attr_col_end)) < 0) {
+	ret = device_create_file(&client->dev, &dev_attr_col_end);
+	if (ret < 0) {
 		dev_info(dev, "creating sysfs entry rowend failed");
 		return -ret;
 	}
@@ -593,8 +603,8 @@ static struct i2c_board_info oled_i2c_board_info = {
 static int __init oled_driver_init(void)
 {
 	int ret = -1;
-	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_SSD1306);
 
+	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_SSD1306);
 	if (oled_i2c_adapter != NULL) {
 		i2c_client_oled =
 		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
