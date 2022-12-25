@@ -114,6 +114,7 @@ static u8 render[36][7] = {
 
  * Similary for the rest...
  */
+static DEFINE_MUTEX(mtx);
 
 /*
  * This function writes the data into the I2C client
@@ -259,6 +260,168 @@ static void SSD1306_Fill(unsigned char data)
 		SSD1306_Write(DATA, data);
 }
 
+static u8 row_start, row_end = 6, col_start, col_end = 127;
+
+static ssize_t col_end_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int n = (int)count;
+	u8 prev_colend;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+
+	prev_colend = col_end;
+	kstrtou8(buf, 0, &col_end);	/* update it! */
+	if (col_start > 127) {
+		pr_info("trying to set invalid value (%d) for col_end\n"
+			" [allowed range: %d-%d]; resetting to previous (%d)\n",
+			col_start, 0, 127, prev_colend);
+		col_end = prev_colend;
+		n = -EFAULT;
+	}
+	dev_dbg(dev, "col_end = %u\n", col_end);
+	mutex_unlock(&mtx);
+	return n;
+}
+static ssize_t col_end_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int n;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	n = snprintf(buf, 25, "%u", col_end);
+	mutex_unlock(&mtx);
+	return n;
+}
+/* The DEVICE_ATTR{_RW|RO|WO}() macro instantiates a struct device_attribute
+ * dev_attr_<name> here...
+ * The name of the 'show' callback function is llkdsysfs_pgoff_show
+ */
+static DEVICE_ATTR_RW(col_end);	/* it's callbacks are above.. */
+// TODO- use DEVICE_ULONG_ATTR() ?
+
+static ssize_t col_start_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int n = (int)count;
+	u8 prev_colstart;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+
+	prev_colstart = col_start;
+	kstrtou8(buf, 0, &col_start);	/* update it! */
+	if (col_start > 6) {
+		pr_info("trying to set invalid value (%d) for col_start\n"
+			" [allowed range: %d-%d]; resetting to previous (%d)\n",
+			col_start, 0, 6, prev_colstart);
+		col_start = prev_colstart;
+		n = -EFAULT;
+	}
+	dev_dbg(dev, "col_start = %u\n", col_start);
+	mutex_unlock(&mtx);
+	return n;
+}
+static ssize_t col_start_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int n;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	n = snprintf(buf, 25, "%u", col_start);
+	mutex_unlock(&mtx);
+	return n;
+}
+/* The DEVICE_ATTR{_RW|RO|WO}() macro instantiates a struct device_attribute
+ * dev_attr_<name> here...
+ * The name of the 'show' callback function is llkdsysfs_pgoff_show
+ */
+static DEVICE_ATTR_RW(col_start);	/* it's callbacks are above.. */
+// TODO- use DEVICE_ULONG_ATTR() ?
+//////////////////
+static ssize_t row_end_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int n = (int)count;
+	u8 prev_rowend;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+
+	prev_rowend = row_end;
+	kstrtou8(buf, 0, &row_end);	/* update it! */
+	if (row_end > 6) {
+		pr_info("trying to set invalid value (%d) for row_end\n"
+			" [allowed range: %d-%d]; resetting to previous (%d)\n",
+			row_end, 0, 6, prev_rowend);
+		row_end = prev_rowend;
+		n = -EFAULT;
+	}
+	dev_dbg(dev, "row_end = %u\n", row_end);
+	mutex_unlock(&mtx);
+	return n;
+}
+static ssize_t row_end_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int n;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	n = snprintf(buf, 25, "%u", row_end);
+	mutex_unlock(&mtx);
+	return n;
+}
+/* The DEVICE_ATTR{_RW|RO|WO}() macro instantiates a struct device_attribute
+ * dev_attr_<name> here...
+ * The name of the 'show' callback function is llkdsysfs_pgoff_show
+ */
+static DEVICE_ATTR_RW(row_end);	/* it's callbacks are above.. */
+// TODO- use DEVICE_ULONG_ATTR() ?
+
+static ssize_t row_start_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int n = (int)count;
+	u8 prev_rowstart;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+
+	prev_rowstart = row_start;
+	kstrtou8(buf, 0, &row_start);	/* update it! */
+	if (row_start > 6) {
+		pr_info("trying to set invalid value (%d) for row_start\n"
+			" [allowed range: %d-%d]; resetting to previous (%d)\n",
+			row_start, 0, 6, prev_rowstart);
+		row_start = prev_rowstart;
+		n = -EFAULT;
+	}
+	dev_dbg(dev, "row_start = %u\n", row_start);
+	mutex_unlock(&mtx);
+	return n;
+}
+static ssize_t row_start_show(struct device *dev,
+			    struct device_attribute *attr, char *buf)
+{
+	int n;
+
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	n = snprintf(buf, 25, "%u", row_start);
+	mutex_unlock(&mtx);
+	return n;
+}
+/* The DEVICE_ATTR{_RW|RO|WO}() macro instantiates a struct device_attribute
+ * dev_attr_<name> here...
+ * The name of the 'show' callback function is llkdsysfs_pgoff_show
+ */
+static DEVICE_ATTR_RW(row_start);	/* it's callbacks are above.. */
+// TODO- use DEVICE_ULONG_ATTR() ?
+
 ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
@@ -266,15 +429,18 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 #define CMD_SET_PAGE_ROW_0TO6	0x22
 #define CMD_SET_COL_0TO127	0x21
 
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+
 	// set page addr: ~ like row #; there r 7 of 'em(0-6)
 	SSD1306_Write(CMD, CMD_SET_PAGE_ROW_0TO6);
-	SSD1306_Write(CMD, 4);     // start addr
-	SSD1306_Write(CMD, 7);     // end addr
+	SSD1306_Write(CMD, row_start);     // row start addr
+	SSD1306_Write(CMD, row_end);       // row end addr
 
 	// set column address
 	SSD1306_Write(CMD, CMD_SET_COL_0TO127);
-	SSD1306_Write(CMD, 64);     //  col start
-	SSD1306_Write(CMD, 127);   //  col end
+	SSD1306_Write(CMD, col_start);     //  col start
+	SSD1306_Write(CMD, col_end);       //  col end
 
 	SSD1306_Fill(0x00);
 	dev_dbg(dev, "buf = %s count = %d\n", buf, count);
@@ -286,7 +452,7 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 			SSD1306_Write(DATA, 0x00);
 			SSD1306_Write(DATA, 0x00);
 		} else {
-			dev_dbg(dev, "buf = %c(%d)\n", buf[j], (int)buf[j]);
+			//dev_dbg(dev, "buf = %c(%d)\n", buf[j], (int)buf[j]);
 			num = buf[j] - '0';
 			if (buf[j] > '9')
 				num = buf[j] - 87; /* as 'a' is ASCII 97 and our 'render'
@@ -296,6 +462,7 @@ ssize_t writechar_store(struct device *dev, struct device_attribute *attr,
 	}
 	SSD1306_Write(DATA, 0x00);
 	SSD1306_Write(DATA, 0x00);
+	mutex_unlock(&mtx);
 
 	return count;
 }
@@ -305,8 +472,11 @@ static int ssd1306_remove(struct i2c_client *client)
 {
 	SSD1306_Fill(0x00);	//fill the OLED with this data
 	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
-	device_remove_file(&client->dev, &dev_attr_writechar);
-	pr_info("removed\n");
+	device_remove_file(&client->dev, &dev_attr_row_end);
+	device_remove_file(&client->dev, &dev_attr_row_start);
+	device_remove_file(&client->dev, &dev_attr_col_end);
+	device_remove_file(&client->dev, &dev_attr_col_start);
+	pr_info("5 sysfs files removed, display Off\n");
 
 	return 0;
 }
@@ -315,6 +485,8 @@ static int ssd1306_remove(struct i2c_client *client)
 static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev'
 			 const struct i2c_device_id *id)
 {
+	int ret = 0;
+
 	/*
 	 * first param: struct <foo>_client *client
 	 * the specialized structure for this kernel framework (eg. i2c, spi, usb,
@@ -334,9 +506,30 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	SSD1306_DisplayInit();
 	SSD1306_Fill(0x00);	// fill the OLED with this data
 
-	device_create_file(&client->dev, &dev_attr_writechar);
+	// Create the sysfs pseudofiles
+	if ((ret = device_create_file(&client->dev, &dev_attr_writechar)) < 0) {
+		dev_info(dev, "creating sysfs entry writechar failed");
+		return -ret;
+	}
+	if ((ret = device_create_file(&client->dev, &dev_attr_row_start)) < 0) {
+		dev_info(dev, "creating sysfs entry rowstart failed");
+		return -ret;
+	}
+	if ((ret = device_create_file(&client->dev, &dev_attr_row_end)) < 0) {
+		dev_info(dev, "creating sysfs entry rowend failed");
+		return -ret;
+	}
+	if ((ret = device_create_file(&client->dev, &dev_attr_col_start)) < 0) {
+		dev_info(dev, "creating sysfs entry rowstart failed");
+		return -ret;
+	}
+	if ((ret = device_create_file(&client->dev, &dev_attr_col_end)) < 0) {
+		dev_info(dev, "creating sysfs entry rowend failed");
+		return -ret;
+	}
+	dev_info(dev, "5 sysfs files setup, display On\n");
 
-	return 0;
+	return ret;
 }
 
 /*------- Matching the driver to the device ------------------
