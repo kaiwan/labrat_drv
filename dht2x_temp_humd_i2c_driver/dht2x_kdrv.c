@@ -62,11 +62,13 @@ static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
 				 unsigned char length, unsigned char *buf)
 {
 	struct i2c_msg msgs[] = {
-		{		/* setup read ptr */
+			// setup a (1) 'write cmd' from master, followed by, (2) read from slave
+		{		/* setup write from master to slave of 1 byte, the cmd */
 		 .addr = client->addr,
 		 .len = 1,
 		 .buf = &reg,
 		 },
+				/* setup read from slave to master of 1 byte, the data received */
 		{
 		 .addr = client->addr,
 		 .flags = I2C_M_RD,
@@ -229,6 +231,7 @@ static ssize_t dht2x_humd_show(struct device *dev, struct device_attribute *attr
 	humidity = (100 * hraw) / 1048;
 	dev_dbg(dev, "Rel-humidity=%d milli%%\n", humidity);
 
+	// RELOOK : check len 10??
 	n = snprintf(buf, 10, "%d", humidity);
 	mutex_unlock(&gdata->lock);
 	return n;
@@ -259,6 +262,7 @@ static ssize_t dht2x_temp_show(struct device *dev, struct device_attribute *attr
 	temperature = ((200 * traw) / 1048) - 50000;
 	dev_dbg(dev, "Temperature=%d milliC\n", temperature);
 
+	// RELOOK : check len 10??
 	n = snprintf(buf, 10, "%d", temperature);
 	mutex_unlock(&gdata->lock);
 	return n;
