@@ -231,8 +231,12 @@ static ssize_t dht2x_humd_show(struct device *dev, struct device_attribute *attr
 	humidity = (100 * hraw) / 1048;
 	dev_dbg(dev, "Rel-humidity=%d milli%%\n", humidity);
 
-	// RELOOK : check len 10??
-	n = snprintf(buf, 10, "%d", humidity);
+	/* Max data that can be passed back to userspace via sysfs is 1 page;
+	 * Here we're passing back the RH (relative humidity); the range will
+	 * be [0-100.000]%. Hence, max bytes to pass back will be for the value
+	 * 100,000, i.e., 6 bytes. Add 1 for the null byte, so, 7 bytes max.
+	 */
+	n = snprintf(buf, 7, "%d", humidity);
 	mutex_unlock(&gdata->lock);
 	return n;
 }
@@ -262,8 +266,13 @@ static ssize_t dht2x_temp_show(struct device *dev, struct device_attribute *attr
 	temperature = ((200 * traw) / 1048) - 50000;
 	dev_dbg(dev, "Temperature=%d milliC\n", temperature);
 
-	// RELOOK : check len 10??
-	n = snprintf(buf, 10, "%d", temperature);
+	/* Max data that can be passed back to userspace via sysfs is 1 page;
+	 * Here we're passing back the temperature in millidegrees Celsius;
+	 * the range as per the datasheet is [-40 to +80]C. Hence, max bytes
+	 * to pass back will be for the value 80,000, i.e., 5 bytes. Add 1 for
+	 * the null byte, so, 6 bytes max.
+	 */
+	n = snprintf(buf, 6, "%d", temperature);
 	mutex_unlock(&gdata->lock);
 	return n;
 }
