@@ -63,12 +63,13 @@ static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
 {
 	struct i2c_msg msgs[] = {
 			// setup a (1) 'write cmd' from master, followed by, (2) read from slave
-		{		/* setup write from master to slave of 1 byte, the cmd */
+		{	/* setup write from master to slave of 1 byte, the cmd */
 		 .addr = client->addr,
 		 .len = 1,
 		 .buf = &reg,
 		 },
-				/* setup read from slave to master of 1 byte, the data received */
+			/* setup read from slave to master of 'length'
+			 * bytes (here it's 7), the data received */
 		{
 		 .addr = client->addr,
 		 .flags = I2C_M_RD,
@@ -367,7 +368,7 @@ static int dht2x_remove(struct i2c_client *client)
  *  pnp, platform, scsi, sdio, serio, spi, tty, usb, usb_serial, vme
  */
 static const struct i2c_device_id dht2x_id[] = {
-	{"knb,dht2x"},		/* matching by name; required for platform and i2c
+	{"knb,dht2x_kdrv"},		/* matching by name; required for platform and i2c
 				 * devices & drivers */
 	// f.e.: { "pcf8563", 0 },
 	{}
@@ -388,7 +389,7 @@ static const struct of_device_id dht2x_of_match[] = {
 	 * consists of a concatenated list of null terminated strings,
 	 * from most specific to most general.
 	 */
-	{.compatible = "knb,dht2x"},
+	{.compatible = "knb,dht2x_kdrv"},
 	// f.e.:   { .compatible = "nxp,pcf8563" },
 	{}
 };
@@ -415,17 +416,15 @@ MODULE_DEVICE_TABLE(acpi, dht2x_acpi_id);
  */
 static struct i2c_driver dht2x_driver = {
 	.driver = {
-		   .name = "dht2x",	/* platform and I2C use the
-					 * 'name' field for the match and thus the bind between the
-					 * DT desc/device and driver */
-		   .of_match_table = of_match_ptr(dht2x_of_match),
-		   },
+		.name = "dht2x_kdrv",/* platform and I2C use the
+				 * 'name' field for the match and thus the bind between the
+				 * DT desc/device and driver */
+		.of_match_table = of_match_ptr(dht2x_of_match),
+	},
 	.probe = dht2x_probe,	// invoked on driver/device bind
 	.remove = dht2x_remove,	// optional; invoked on driver/device detach
 //      .disconnect = dht2x_disconnect,// optional; invoked on device disconnect
-
 	.id_table = dht2x_id,
-
 //      .suspend    = dht2x_suspend,    // optional
 //      .resume     = dht2x_resume,     // optional
 };
