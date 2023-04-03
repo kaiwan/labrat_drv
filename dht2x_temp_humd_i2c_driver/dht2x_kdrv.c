@@ -34,7 +34,7 @@
 #include <linux/delay.h>
 #include <linux/crc8.h>
 
-MODULE_AUTHOR("Kaiwan N Billy");
+MODULE_AUTHOR("Kaiwan N Billimoria");
 MODULE_DESCRIPTION("Kernel driver for the DHT2x (dht20/21/22) temperature & humidity sensor");
 MODULE_LICENSE("Dual MIT/GPL");
 

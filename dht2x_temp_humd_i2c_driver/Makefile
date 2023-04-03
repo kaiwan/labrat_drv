@@ -113,6 +113,12 @@ install:
 	sudo depmod
 	@echo " [If !debug, stripping debug info from ${KMODDIR}/extra/${FNAME_C}.ko]"
 	$(shell if [ "${MYDEBUG}" != "y" ]; then sudo ${STRIP} --strip-debug ${KMODDIR}/extra/${FNAME_C}.ko; fi)
+	@echo " --DTB: generate new DTB and set it up--"
+	@echo " --DTB: !!! ASSUMING the target is a Raspberry Pi 0W !!!--"
+	dtc -I dts my_rpi0w_dht2x_gen.dts -o my_rpi0w_dht2x_gen.dtb 2>/dev/null
+	sudo cp my_rpi0w_dht2x_gen.dtb /boot
+	sudo mv /boot/bcm2708-rpi-zero-w.dtb /boot/bcm2708-rpi-zero-w.dtb.orig
+	sudo mv /boot/my_rpi0w_dht2x_gen.dtb /boot/bcm2708-rpi-zero-w.dtb
 clean:
 	@echo
 	@echo "--- cleaning ---"

@@ -841,13 +841,16 @@
 			 dht2x: dht22@0 {
 				 compatible = "knb,dht2x_kdrv";
 				 reg = <0x38>;
-				 /*
-				 pinctrl-names = "default";
-				  pinctrl-0 = <&dht11_pins>; */
 				 status = "okay";
-				 //#clock-cells = <1>;
 			 };
 		};
+
+		/* KNB: for earlier dt_platform_drv/dtdemo_platformdrv_via_dtb demo! */
+		dtdemo_chip {
+                        compatible = "dtdemo,dtdemo_platdev";
+                        aproperty = "my prop 1";
+                        status = "okay";
+                };
 
 		timer@7e003000 {
 			compatible = "brcm,bcm2835-system-timer";
