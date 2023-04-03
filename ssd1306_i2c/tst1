@@ -15,4 +15,6 @@ done
 
 data1="01234567890123456789"
 data="${data1} ${data1} ${data1} ${data1} ${data1} ${data1} ${data1} ${data1}"
+
+data="0123456789 abc abc abc"
 echo "${data}" > ${SYSFS_ENTRY}
