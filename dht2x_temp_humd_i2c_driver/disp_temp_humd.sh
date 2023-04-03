@@ -17,14 +17,24 @@ p1=${1:-}
 }
 [ $# -eq 1 ] && intv_sec=$p1
 
+set +e
 lsmod|grep -w "^${drv}" >/dev/null 2>&1
 [ $? -ne 0 ] && {
   echo "${name}: driver ${drv} not loaded? aborting..."
   exit 1
 }
+set -e
+
 humd_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_humd
 temp_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_temp
+[[ ! -f ${humd_file} ]] && {
+  echo "humidity sysfs file not present? aborting..." ; exit 1
+}
+[[ ! -f ${temp_file} ]] && {
+  echo "temeprature sysfs file not present? aborting..." ; exit 1
+}
 
+echo "temperature(milliC),rel_humidity(milli%)"
 while [ true ]
 do
    temp=$(cat ${temp_file})
