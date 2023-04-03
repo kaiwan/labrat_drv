@@ -523,12 +523,12 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	}
 	ret = device_create_file(&client->dev, &dev_attr_col_start);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry rowstart failed");
+		dev_info(dev, "creating sysfs entry colstart failed");
 		return -ret;
 	}
 	ret = device_create_file(&client->dev, &dev_attr_col_end);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry rowend failed");
+		dev_info(dev, "creating sysfs entry colend failed");
 		return -ret;
 	}
 	dev_info(dev, "5 sysfs files setup, display On\n");
