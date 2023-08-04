@@ -343,13 +343,19 @@ static int dht2x_probe(struct i2c_client *client,	// named as 'client' or 'dev'
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+static void dht2x_remove(struct i2c_client *client)
+#else
 static int dht2x_remove(struct i2c_client *client)
+#endif
 {
 	device_remove_file(&client->dev, &dev_attr_dht2x_humd);
 	device_remove_file(&client->dev, &dev_attr_dht2x_temp);
 	dev_dbg(&client->dev, "removed\n");
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
 	return 0;
+#endif
 }
 
 /*------- Matching the driver to the device ------------------
