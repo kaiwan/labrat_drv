@@ -467,7 +467,11 @@ static ssize_t writechar_store(struct device *dev, struct device_attribute *attr
 }
 static DEVICE_ATTR_WO(writechar);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+static void ssd1306_remove(struct i2c_client *client)
+#else
 static int ssd1306_remove(struct i2c_client *client)
+#endif
 {
 	SSD1306_Fill(0x00);	//fill the OLED with this data
 	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
@@ -477,7 +481,9 @@ static int ssd1306_remove(struct i2c_client *client)
 	device_remove_file(&client->dev, &dev_attr_col_start);
 	pr_info("5 sysfs files removed, display Off\n");
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
 	return 0;
+#endif
 }
 
 /* The probe method of our driver */
