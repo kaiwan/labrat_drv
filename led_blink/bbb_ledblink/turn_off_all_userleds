@@ -1,0 +1,16 @@
+#!/bin/bash
+
+NUM_USER_LEDS=4
+START_ULED=0
+turn_off_all_userleds()
+{
+local i=${START_ULED}
+while [[ $i -lt ${NUM_USER_LEDS} ]]
+do
+    echo 0 > /sys/class/leds/beaglebone\:green\:usr${i}/brightness
+    let i=i+1
+done
+}
+
+turn_off_all_userleds
+exit 0
