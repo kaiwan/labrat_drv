@@ -1,0 +1,31 @@
+/*
+ * DTBO - DT overlay - for the DHT2X temperature+humidity sensor chip on the TI BBB
+ * Inspired by - on the default Debian OS BBB rootfs :
+ *  /opt/source/dtb-5.10-ti/src/arm/overlays/BB-I2C2-BME680.dts
+ */
+/dts-v1/;
+/plugin/;
+
+/*
+ * Helper to show loaded overlays under: /proc/device-tree/chosen/overlays/
+ */
+&{/chosen} {
+        overlays {
+                BB-I2C2-DHT2X.kernel = "Tue Oct 14 22:31:00 2000";
+        };
+};
+
+&i2c2 {
+	status = "okay";
+
+        clock-frequency = <100000>;
+
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+	dht22@38 {
+                   compatible = "asair,dht2x_kdrv";
+                   reg = <0x38>;
+                   status = "okay";
+        };
+};
