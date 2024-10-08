@@ -4,18 +4,21 @@
  * Kernel driver for the DHT2x (dht20/21/22) temperature & humidity sensor.
  * Datasheet: https://aqicn.org/air/sensor/spec/asair-dht20.pdf
  *
- * Demo-
- * After loading:
+ * Demo: after loading:
+ * Temperature unit is millidegrees Cesius
  * $ cat /sys/bus/i2c/devices/1-0038/dht2x_temp
  * 25841$
+ * (so the reported temperature is 25.841 C)
+ * Humidity unit is milli-percentage points
  * $ cat /sys/bus/i2c/devices/1-0038/dht2x_humd
  * 59925$
+ * (so the reported relative humidity is 59.925%)
  *
  * (c) 2022 Kaiwan N Billimoria, kaiwanTECH
  * License: Dual MIT/GPL
  */
 #define pr_fmt(fmt) "%s:%s(): " fmt, KBUILD_MODNAME, __func__
-#define dev_fmt(fmt) "%s(): " fmt, __func__
+//#define dev_fmt(fmt) "%s(): " fmt, __func__
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -62,7 +65,7 @@ static int dht2x_read_block_data(struct i2c_client *client, unsigned char reg,
 				 unsigned char length, unsigned char *buf)
 {
 	struct i2c_msg msgs[] = {
-			// setup a (1) 'write cmd' from master, followed by, (2) read from slave
+	// setup a (1) 'write cmd' from master, followed by, (2) read from slave
 		{	/* setup write from master to slave of 1 byte, the cmd */
 		 .addr = client->addr,
 		 .len = 1,
@@ -244,7 +247,9 @@ static ssize_t dht2x_humd_show(struct device *dev, struct device_attribute *attr
 
 /*
  * The macro DEVICE_ATTR_XX(foo) generates the structure dev_attr_foo !
- * So, here, it generates the struct dev_attr_dht2x_humd
+ * So, here, it generates the struct dev_attr_dht2x_humd; furthermore,
+ * 'RO' implies only a 'show' method; the 'show' callback will be the function
+ * named foo_show, so here it's named dht2x_humd_show() !
  */
 static DEVICE_ATTR_RO(dht2x_humd);	/* it's show callback is above.. */
 
@@ -280,7 +285,9 @@ static ssize_t dht2x_temp_show(struct device *dev, struct device_attribute *attr
 
 /*
  * The macro DEVICE_ATTR_XX(foo) generates the structure dev_attr_foo !
- * So, here, it generates the struct dev_attr_dht2x_temp
+ * So, here, it generates the struct dev_attr_dht2x_temp; furthermore,
+ * 'RO' implies only a 'show' method; the 'show' callback will be the function
+ * named foo_show, so here it's named dht2x_temp_show() !
  */
 static DEVICE_ATTR_RO(dht2x_temp);	/* it's show callback is above.. */
 
@@ -374,7 +381,7 @@ static int dht2x_remove(struct i2c_client *client)
  *  pnp, platform, scsi, sdio, serio, spi, tty, usb, usb_serial, vme
  */
 static const struct i2c_device_id dht2x_id[] = {
-	{"knb,dht2x_kdrv"},		/* matching by name; required for platform and i2c
+	{"asair,dht2x_kdrv"},	/* matching by name; required for platform and i2c
 				 * devices & drivers */
 	// f.e.: { "pcf8563", 0 },
 	{}
@@ -395,7 +402,7 @@ static const struct of_device_id dht2x_of_match[] = {
 	 * consists of a concatenated list of null terminated strings,
 	 * from most specific to most general.
 	 */
-	{.compatible = "knb,dht2x_kdrv"},
+	{.compatible = "asair,dht2x_kdrv"},
 	// f.e.:   { .compatible = "nxp,pcf8563" },
 	{}
 };
