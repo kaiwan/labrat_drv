@@ -9,7 +9,7 @@ intv_sec=1
 
 detect_board()
 {
-  MODEL=$(cat /sys/firmware/devicetree/base/model)
+  MODEL=$(cat /sys/firmware/devicetree/base/model 2>/dev/null)
   set +e
   [[ "${MODEL}" = "TI AM335x BeagleBone Black" ]] && return 1 || true # it's a TI BBB!
   echo "${MODEL}" |grep "Raspberry Pi" >/dev/null && return 2 || true
@@ -19,17 +19,17 @@ detect_board()
 #--- 'main'
 
 detect_board
-if [[ $? -eq 1 ]] ; then
+ret=$?
+if [[ ${ret} -eq 1 ]] ; then
    i2cbus=2 # on the TI BBB, the DTS specifies the I2C bus #2 as having the chip
    echo "Detected we're running on the ${MODEL}"
-elif [[ $? -eq 2 ]] ; then
+elif [[ ${ret} -eq 2 ]] ; then
    i2cbus=1 # on the R Pi, the DTS specifies the I2C bus #1 as having the chip
    echo "Detected we're running on the ${MODEL}"
 else
    echo "Unknown board, aborting"
    exit 1
 fi
-
 set -e
 
 # ${VARNAME:-DEFAULT_VALUE} evals to DEFAULT_VALUE if VARNAME undefined
