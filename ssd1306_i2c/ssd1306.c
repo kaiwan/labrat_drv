@@ -4,6 +4,23 @@
  * SSD1306 OLED display simple I2C driver
  * For the Raspberry Pi family host devices...
  *
+ * Effective rows x cols:
+ * 8 rows
+ * 16 cols
+ * 1st row is yellow colour, rem rows are blue
+ * Pixels: 128/row x 64/col
+ *
+ * # fbset 
+ *
+ * mode "128x64-0"
+ *      # D: 0.000 MHz, H: 0.000 kHz, V: 0.000 Hz
+ *      geometry 128 64 128 64 1
+ *      timings 0 0 0 0 0 0 0
+ *      accel false
+ *      rgba 1/0,1/0,1/0,0/0
+ * endmode
+ *
+ * 
  * TODO-
  *  [ ] clear full screen
  *  [ ] clear curr row
@@ -26,7 +43,7 @@
 #include <linux/device.h>
 #include <linux/i2c.h>
 
-MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan NB");
+MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan N Billimoria");
 MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver");
 MODULE_LICENSE("GPL");
 
@@ -53,7 +70,7 @@ static u8 render[36][7] = {
 	{0x00, 0x01, 0x01, 0x01, 0x01, 0x7f, 0x00},	// 7
 	{0x00, 0x7f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 8
 	{0x00, 0x4f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 9
-	{0x00, 0x00, 0xf1, 0x91, 0x91, 0xfe, 0x00},	// a
+	{0x00, 0x00, 0xf1, 0x91, 0x91, 0xfe, 0x00},	// a : to be improved..
 	{0xff, 0x88, 0x88, 0x88, 0x88, 0x70, 0x00},	// b :correct!
 	{0x00, 0xf8, 0x88, 0x88, 0x88, 0x88, 0x00},	// c
 };
@@ -69,11 +86,11 @@ static u8 render[36][7] = {
  * Take the digit '0'; the render[0][0] represents it's bit pattern:
 	{0x00, 0x7f, 0x41, 0x41, 0x41, 0x7f, 0x00},	// 0
  * Each byte data is written vertically into a 'page'; there are 8 pages,
- * page 0 to page 7. So 0x00 will go into page 0, 0x7f into page 1, 0x41
- * to page 2, and so on...
- * There are 128 columns, COL0 to COL127; each holds a bit. So 8 bits being
- * a byte, we can have upto 128/8 = 16 characters per row. So the effective
- * display resolution becomes 16x8 chars.
+ * page 0 to page 7 (see pg 25 of the datasheet). So 0x00 will go into page 0,
+ * 0x7f into page 1, 0x41 to page 2, and so on...
+ * There are 128 segments or columns, SEG0 to SEG127 (or COL0 to COL127); each
+ * holds a bit. So 8 bits being a byte, we can have upto 128/8 = 16 characters
+ * per row. So the effective display resolution becomes 16x8 chars.
 
    When writing out a byte, say 0x8f, the LSB nibble, i.e., 0xf = 1111, is
    written *first*, then the MSB nibble 0x8 = 1000. BUT it seems to render from
@@ -115,6 +132,9 @@ static u8 render[36][7] = {
    Pg7  X  X  X  X  X  _  _
 
  * Similary for the rest...
+ *
+ * (The 'official' driver explains it as well:
+ *  drivers/video/fbdev/ssd1307fb.c )
  */
 static DEFINE_MUTEX(mtx);
 
@@ -454,6 +474,7 @@ static ssize_t writechar_store(struct device *dev, struct device_attribute *attr
 			//dev_dbg(dev, "buf = %c(%d)\n", buf[j], (int)buf[j]);
 			num = buf[j] - '0';
 			if (buf[j] > '9')
+				// map the ASCII char to our 2d 'render' array
 				num = buf[j] - 87; /* as 'a' is ASCII 97 and our 'render'
 				array has element 10 as 'a' */
 			RENDER(num);
@@ -578,7 +599,7 @@ static const struct of_device_id ssd1306_of_match[] = {
 	 * consists of a concatenated list of null terminated strings,
 	 * from most specific to most general.
 	 */
-	{.compatible = "knb,ssd1306"},
+	{.compatible = "solomon,ssd1306"},
 	// f.e.:   { .compatible = "nxp,pcf8563" },
 	{}
 };
@@ -608,13 +629,12 @@ static struct i2c_board_info oled_i2c_board_info = {
 
 static int __init oled_driver_init(void)
 {
-	int ret = -1;
+	int ret = -ENODEV;
 
 	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_SSD1306);
 	if (oled_i2c_adapter != NULL) {
 		i2c_client_oled =
 		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
-
 		if (i2c_client_oled != NULL) {
 			i2c_add_driver(&ssd1306_driver);
 			ret = 0;
