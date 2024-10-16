@@ -1,10 +1,36 @@
 #!/bin/bash
 set -euo pipefail
 name=$(basename $0)
+
 drv=dht2x_kdrv
 i2cbus=1        # on I2C bus #1; update if required
 chip_addr=0038  # chip addr is 0x38; update if required
 intv_sec=1
+
+detect_board()
+{
+  MODEL=$(cat /sys/firmware/devicetree/base/model 2>/dev/null)
+  set +e
+  [[ "${MODEL}" = "TI AM335x BeagleBone Black" ]] && return 1 || true # it's a TI BBB!
+  echo "${MODEL}" |grep "Raspberry Pi" >/dev/null && return 2 || true
+}
+
+
+#--- 'main'
+
+detect_board
+ret=$?
+if [[ ${ret} -eq 1 ]] ; then
+   i2cbus=2 # on the TI BBB, the DTS specifies the I2C bus #2 as having the chip
+   echo "Detected we're running on the ${MODEL}"
+elif [[ ${ret} -eq 2 ]] ; then
+   i2cbus=1 # on the R Pi, the DTS specifies the I2C bus #1 as having the chip
+   echo "Detected we're running on the ${MODEL}"
+else
+   echo "Unknown board, aborting"
+   exit 1
+fi
+set -e
 
 # ${VARNAME:-DEFAULT_VALUE} evals to DEFAULT_VALUE if VARNAME undefined
 p1=${1:-}

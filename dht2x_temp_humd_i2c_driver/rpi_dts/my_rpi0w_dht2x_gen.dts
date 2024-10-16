@@ -839,7 +839,7 @@
 			 * Also note it's added in the right place, under the relevant I2C node
 			 */
 			 dht2x: dht22@0 {
-				 compatible = "knb,dht2x_kdrv";
+				 compatible = "asair,dht2x_kdrv";
 				 reg = <0x38>;
 				 status = "okay";
 			 };
