@@ -2,7 +2,7 @@
 set -euo pipefail
 name=$(basename $0)
 
-drv=dht2x_kdrv
+KDRV=dht2x_kdrv
 i2cbus=1        # on I2C bus #1; update if required
 chip_addr=0038  # chip addr is 0x38; update if required
 intv_sec=1
@@ -22,12 +22,14 @@ detect_board
 ret=$?
 if [[ ${ret} -eq 1 ]] ; then
    i2cbus=2 # on the TI BBB, the DTS specifies the I2C bus #2 as having the chip
-   echo "Detected we're running on the ${MODEL}"
+   ln -sf Makefile.bbb Makefile  # setup the Makefile slink to point to the correct Makefile
+   echo "+++ Detected we're running on the ${MODEL}"
 elif [[ ${ret} -eq 2 ]] ; then
    i2cbus=1 # on the R Pi, the DTS specifies the I2C bus #1 as having the chip
-   echo "Detected we're running on the ${MODEL}"
+   ln -sf Makefile.rpi Makefile  # setup the Makefile slink to point to the correct Makefile
+   echo "+++ Detected we're running on the ${MODEL}"
 else
-   echo "Unknown board, aborting"
+   echo "!!! Unknown board, aborting"
    exit 1
 fi
 set -e
@@ -44,10 +46,11 @@ p1=${1:-}
 [ $# -eq 1 ] && intv_sec=$p1
 
 set +e
-lsmod|grep -w "^${drv}" >/dev/null 2>&1
+lsmod|grep -w "^${KDRV}" >/dev/null 2>&1
 [ $? -ne 0 ] && {
-  echo "${name}: driver ${drv} not loaded? aborting..."
-  exit 1
+  echo "${name}: loading driver ${KDRV} now..."
+  [[ ! -f ${KDRV}.ko ]] && make || exit 1
+  sudo insmod ${KDRV}.ko || exit 1
 }
 set -e
 
