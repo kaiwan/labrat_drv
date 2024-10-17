@@ -54,13 +54,19 @@ lsmod|grep -w "^${KDRV}" >/dev/null 2>&1
 }
 set -e
 
+FAIL_MSG="
+Please ensure that:
+a) The DHT2x sensor is correctly connected to the device
+b) Are all the wires making contact properly?"
 humd_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_humd
 temp_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_temp
 [[ ! -f ${humd_file} ]] && {
-  echo "humidity sysfs file not present? aborting..." ; exit 1
+  echo "humidity sysfs file not present? aborting..."
+  echo "${FAIL_MSG}"; exit 1
 }
 [[ ! -f ${temp_file} ]] && {
-  echo "temeprature sysfs file not present? aborting..." ; exit 1
+  echo "temperature sysfs file not present? aborting..."
+  echo "${FAIL_MSG}"; exit 1
 }
 
 echo "temperature(milliC),rel_humidity(milli%)"
