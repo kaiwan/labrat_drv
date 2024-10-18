@@ -49,15 +49,18 @@ set +e
 lsmod|grep -w "^${KDRV}" >/dev/null 2>&1
 [ $? -ne 0 ] && {
   echo "${name}: loading driver ${KDRV} now..."
-  [[ ! -f ${KDRV}.ko ]] && make || exit 1
-  sudo insmod ${KDRV}.ko || exit 1
+  [[ ! -f ${KDRV}.ko ]] && make || true
+  sudo insmod ${KDRV}.ko || {
+	  echo "insmod failed!" ;  exit 1
+  } && true
 }
 set -e
 
 FAIL_MSG="
 Please ensure that:
 a) The DHT2x sensor is correctly connected to the device
-b) Are all the wires making contact properly?"
+b) Are all the wires making contact properly?
+c) If the DTB[O] has been modified, pl reboot and retry"
 humd_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_humd
 temp_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_temp
 [[ ! -f ${humd_file} ]] && {
