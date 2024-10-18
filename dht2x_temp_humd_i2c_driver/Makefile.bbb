@@ -154,14 +154,15 @@ ifeq (,$(shell which dtc))
 endif
 	@echo "++++++++++++ For the TI Beagle Bone Black (BBB) board ONLY +++++++++++++++++"
 	@echo "--- compile the Device Tree Blob (DTB) Overlay from the DTS and cp to /boot/.../overlays ---"
-	dtc -@ -I dts -O dtb -o bbb_dts/BBB-DHT2X.dtbo bbb_dts/bbb_dht2x.dts
-	sudo cp bbb_dts/BBB-DHT2X.dtbo /boot/dtbs/$(shell uname -r)/overlays
-	@echo "Add the following line to /boot/uEnv.txt (if not already there):"
-	@echo "dtb_overlay=/boot/dtbs/$(shell uname -r)/overlays/BBB-DHT2X.dtbo"
-	@echo "-OR- (one of the dtb_boot_addr4 to addr7 lines)"
-	@echo "dtb_overlay_addr4=/boot/dtbs/$(shell uname -r)/overlays/BBB-DHT2X.dtbo"
-	#dtc -@ -I dts -O dtb -o $(FNAME_C).dtb $(FNAME_C).dts
-	# DTBO - Device Tree Blob Overlay
+	bbb_dts/gen_bbb_dtbo
+#	dtc -@ -I dts -O dtb -o bbb_dts/BBB-DHT2X.dtbo bbb_dts/bbb_dht2x.dts
+#	sudo cp bbb_dts/BBB-DHT2X.dtbo /boot/dtbs/$(shell uname -r)/overlays
+#	@echo "Add the following line to /boot/uEnv.txt (if not already there):"
+#	@echo "dtb_overlay=/boot/dtbs/$(shell uname -r)/overlays/BBB-DHT2X.dtbo"
+#	@echo "-OR- (one of the dtb_boot_addr4 to addr7 lines)"
+#	@echo "dtb_overlay_addr4=/boot/dtbs/$(shell uname -r)/overlays/BBB-DHT2X.dtbo"
+#	#dtc -@ -I dts -O dtb -o $(FNAME_C).dtb $(FNAME_C).dts
+#	# DTBO - Device Tree Blob Overlay
 nsdeps:
 	@echo "--- nsdeps (namespace dependencies resolution; for possibly importing ns's) ---"
 	make -C $(KDIR) M=$(PWD) nsdeps
