@@ -1,5 +1,6 @@
 /*
  * DTBO - DT overlay - for the DHT2X temperature+humidity sensor chip on the TI BBB
+ * Uses what seems to the default-pinmux-enabled I2C bus - I2C2
  * Inspired by - on the default Debian OS BBB rootfs :
  *  /opt/source/dtb-5.10-ti/src/arm/overlays/BB-I2C2-BME680.dts
  */
