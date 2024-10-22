@@ -6,7 +6,8 @@
 	exit 1
 }
 SYSFS_ENTRY=/sys/bus/i2c/devices/1-003c/writechar
-ROWNUM=/sys/bus/i2c/devices/1-003c/row_start
+ROW_START=/sys/bus/i2c/devices/1-003c/row_start
+ROW_END=/sys/bus/i2c/devices/1-003c/row_end
 MAXROW=7
 
 # write upto 18 chars max in a row
@@ -19,28 +20,36 @@ d5="555 555 555 555 55"
 d6="666 666 666 666 66"
 d7="777 777 777 777 77"
 
-echo 0 > ${ROWNUM}
+echo 0 > ${ROW_START}
+echo 0 > ${ROW_END}
 echo -n "${d0}" > ${SYSFS_ENTRY}
 
-echo 1 > ${ROWNUM}
+echo 1 > ${ROW_START}
+echo 1 > ${ROW_END}
 echo -n "${d1}" > ${SYSFS_ENTRY}
 
-echo 2 > ${ROWNUM}
+echo 2 > ${ROW_START}
+echo 2 > ${ROW_END}
 echo -n "${d2}" > ${SYSFS_ENTRY}
 
-echo 3 > ${ROWNUM}
+echo 3 > ${ROW_START}
+echo 3 > ${ROW_END}
 echo -n "${d3}" > ${SYSFS_ENTRY}
 
-echo 4 > ${ROWNUM}
+echo 4 > ${ROW_START}
+echo 4 > ${ROW_END}
 echo -n "${d4}" > ${SYSFS_ENTRY}
 
-echo 5 > ${ROWNUM}
+echo 5 > ${ROW_START}
+echo 5 > ${ROW_END}
 echo -n "${d5}" > ${SYSFS_ENTRY}
 
-echo 6 > ${ROWNUM}
+echo 6 > ${ROW_START}
+echo 6 > ${ROW_END}
 echo -n "${d6}" > ${SYSFS_ENTRY}
 
-echo 7 > ${ROWNUM}
+echo 7 > ${ROW_START}
+echo 7 > ${ROW_END}
 echo -n "${d7}" > ${SYSFS_ENTRY}
 
 exit 0
