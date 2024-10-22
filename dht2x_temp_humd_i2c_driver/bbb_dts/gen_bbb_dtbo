@@ -1,7 +1,7 @@
 #!/bin/bash
-
-DTS=bbb_dht2x.dts
-DTBO=BBB-DHT2X.dtbo
+# To be invoked from parent folder via the Makefile.bbb
+DTS=bbb_dts/bbb_i2c2_dht2x.dts
+DTBO=bbb_dts/BBB-I2C2-DHT2X.dtbo
 UBOOT_LOC=/boot/dtbs/5.10.168-ti-r71/overlays
 
 dtc -I dts -O dtb -@ ${DTS} -o ${DTBO} || {
@@ -9,14 +9,16 @@ dtc -I dts -O dtb -@ ${DTS} -o ${DTBO} || {
 }
 
 sudo cp ${DTBO} ${UBOOT_LOC}/
-ls -l ${UBOOT_LOC}/${DTBO}
+ls -l ${UBOOT_LOC}/$(basename ${DTBO})
 
 echo "Verifying it's in the /boot/uEnv.txt..."
-grep "^dtb_overlay=${UBOOT_LOC}/${DTBO}" /boot/uEnv.txt || {
+grep "^dtb_overlay.*=${UBOOT_LOC}/${DTBO}" /boot/uEnv.txt || {
   echo "
 FAILED to verify presence of our DTBO; please add this line to /boot/uEnv.txt and then retry:
-dtb_overlay=${UBOOT_LOC}/${DTBO}
-" ; exit 1
+dtb_overlay=${UBOOT_LOC}/$(basename ${DTBO})
+-OR- add it to one of the dtb_boot_addr4 to addr7 lines, f.e.
+dtb_overlay_addr4=${UBOOT_LOC}/$(basename ${DTBO})"
+  exit 1
 }
 echo "OK, verified; if DTS modified, reboot and then test, else you can run the kernel driver now..."
 exit 0
