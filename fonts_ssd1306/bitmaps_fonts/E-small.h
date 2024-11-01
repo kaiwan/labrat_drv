@@ -1,0 +1,4 @@
+#define E-small_width 8
+#define E-small_height 8
+static unsigned char E-small_bits[] = {
+   0x00, 0xff, 0x99, 0x99, 0x99, 0x81, 0x81, 0x81};

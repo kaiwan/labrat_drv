@@ -1,0 +1,4 @@
+#define I-small_width 8
+#define I-small_height 8
+static unsigned char I-small_bits[] = {
+   0x00, 0xc3, 0xc3, 0xff, 0xff, 0xc3, 0xc3, 0x00};

@@ -1,0 +1,4 @@
+#define P-small_width 8
+#define P-small_height 8
+static unsigned char P-small_bits[] = {
+   0x00, 0xff, 0x11, 0x11, 0x09, 0x06, 0x00, 0x00};

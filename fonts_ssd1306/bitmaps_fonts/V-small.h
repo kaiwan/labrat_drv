@@ -1,0 +1,4 @@
+#define V-small_width 8
+#define V-small_height 8
+static unsigned char V-small_bits[] = {
+   0x00, 0x0e, 0x30, 0xc0, 0xc0, 0x30, 0x0e, 0x00};
