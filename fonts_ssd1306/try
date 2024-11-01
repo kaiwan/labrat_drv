@@ -1,19 +1,36 @@
 #!/bin/bash
 
-[[ "$1" = "-b" ]] && {
-  echo "lkm ssd1306"
-  lkm ssd1306
-}
-
 ROW0=/sys/bus/i2c/devices/1-003c/writechar_row0
 ROW1=/sys/bus/i2c/devices/1-003c/writechar_row1
 ROW7=/sys/bus/i2c/devices/1-003c/writechar_row7
 ROW3TO6_LARGE=/sys/bus/i2c/devices/1-003c/rows2to6_large5
-sudo chmod 0222 ${ROW0} ${ROW1} ${ROW7} ${ROW3TO6_LARGE}
 
+clrscr()
+{
 echo '' > ${ROW0}
 echo '' > ${ROW1}
 echo '' > ${ROW7}
+}
+
+
+#--- 'main'
+KDRV=ssd1306
+[[ "$1" = "-b" ]] && {
+  echo "lkm ${KDRV}"
+  lkm ${KDRV}
+}
+
+lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
+  if [[ -f ${KDRV}.ko ]] ; then
+     sudo insmod ./${KDRV}.ko
+  else
+     lkm ${KDRV}
+  fi
+}
+
+sudo chmod 0222 ${ROW0} ${ROW1} ${ROW7} ${ROW3TO6_LARGE} || exit 1
+
+clrscr
 
 #echo 'degrees Celsius' > ${ROW1}
 echo 'Env Info Prj' > ${ROW7}
