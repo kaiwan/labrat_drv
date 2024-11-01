@@ -1,0 +1,39 @@
+#!/bin/bash
+
+[[ "$1" = "-b" ]] && {
+  echo "lkm ssd1306"
+  lkm ssd1306
+}
+
+ROW0=/sys/bus/i2c/devices/1-003c/writechar_row0
+ROW1=/sys/bus/i2c/devices/1-003c/writechar_row1
+ROW7=/sys/bus/i2c/devices/1-003c/writechar_row7
+ROW3TO6_LARGE=/sys/bus/i2c/devices/1-003c/rows2to6_large5
+sudo chmod 0222 ${ROW0} ${ROW1} ${ROW7} ${ROW3TO6_LARGE}
+
+echo '' > ${ROW0}
+echo '' > ${ROW1}
+echo '' > ${ROW7}
+
+#echo 'degrees Celsius' > ${ROW1}
+echo 'Env Info Prj' > ${ROW7}
+
+#echo -n "99.9C" > ${ROW3TO6_LARGE}
+#echo -n "24.8C" > ${ROW3TO6_LARGE}
+
+#echo 'HUMIDITY' > ${ROW0}
+#echo -n "74.8%" > ${ROW3TO6_LARGE}
+#exit 0
+
+
+for i in $(seq 0 9) ; do
+	#echo -n "7.${i}H" > ${ROW3TO6_LARGE}
+	echo 'TEMPERATURE' > ${ROW0}
+	echo -n "28.${i}C" > ${ROW3TO6_LARGE}
+	sleep 2
+	echo 'HUMIDITY %' > ${ROW0}
+	echo -n "88.${i}%" > ${ROW3TO6_LARGE}
+	sleep 2
+done
+
+dmesg
