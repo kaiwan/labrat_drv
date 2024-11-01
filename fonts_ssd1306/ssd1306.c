@@ -86,7 +86,7 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
  *  Arguments:
  *      is_cmd -> CMD (Bool true) => command,
  *                DATA (Bool false) => data
- *      data   -> data to be written
+ *      data   -> the data item to be written
  */
 static void SSD1306_Write(bool is_cmd, unsigned char data)
 {
@@ -193,48 +193,51 @@ static void SSD1306_Fill(unsigned char data)
 
 // Pretty horizontal lines all in same col increasing lengths!
 #define	TEST_H_LINES() do { \
-	int x=3, start_row=3; \
-	LINE_H_HALFU(x,start_row); \
-	LINE_H_1U(x,start_row+1); \
-	LINE_H_1PT5U(x,start_row+2); \
-	LINE_H_2U(x,start_row+3); \
-} while(0)
+	int x = 3, start_row = 3; \
+	LINE_H_HALFU(x, start_row); \
+	LINE_H_1U(x, start_row+1); \
+	LINE_H_1PT5U(x, start_row+2); \
+	LINE_H_2U(x, start_row+3); \
+} while (0)
 
 // Pretty vertical lines all in same row increasing heights!
 #define	TEST_V_LINES() do { \
-	int y=1, start_col=70; \
-	LINE_V_1U(start_col,y); \
-	LINE_V_2U(start_col+5,y); \
-	LINE_V_3U(start_col+10,y); \
-	LINE_V_4U(start_col+15,y); \
-} while(0)
+	int y = 1, start_col = 70; \
+	LINE_V_1U(start_col, y); \
+	LINE_V_2U(start_col+5, y); \
+	LINE_V_3U(start_col+10, y); \
+	LINE_V_4U(start_col+15, y); \
+} while (0)
 
-#define	DISPLAY_TEMPERATURE(X,Y) do { \
+#if 0
+#define	DISPLAY_TEMPERATURE(X, Y) do { \
 	int h_off = 30;    \
 	DIGIT_2((X), (Y));   \
 	DIGIT_4((X)+h_off, (Y));   \
 	PERIOD((X)+h_off+25, (5));   \
 	DIGIT_9((X)+h_off+25+15, (Y));  \
 	LETTER_C((X)+h_off+25+15+28, (Y));  \
-	/* so h_off+25+15+28 = 98 ;
-	  And the last # starts here with len of about LINE_1U_LEN/2 ie 15
-	  So, it's totally about 98+15 = 113 cols used! (127 is last col) */ \
-} while(0)
-	//LETTER_C((X)+h_off+25+15+28, (Y)); 
-	//DIGIT_9((X)+h_off+25+15+25, (Y));  
+	/* so h_off+25+15+28 = 98 ; \
+	 * And the last # starts here with len of about LINE_1U_LEN/2 ie 15 \
+	 * So, it's totally about 98+15 = 113 cols used! (127 is last col) \
+	 */
+} while (0)
 
-#define	DISPLAY_HUMIDITY(X,Y) do { \
+#define	DISPLAY_HUMIDITY(X, Y) do { \
 	int h_off = 30;    \
 	DIGIT_8((X), (Y));   \
 	DIGIT_5((X)+h_off, (Y));   \
 	PERIOD((X)+h_off+25, (5));   \
 	DIGIT_1((X)+h_off+25+15, (Y));  \
 	LETTER_H((X)+h_off+25+15+25, (Y)); \
-	/* so h_off+25+15+28 = 98 ;
-	  And the last # starts here with len of about LINE_1U_LEN/2 ie 15
-	  So, it's totally about 98+15 = 113 cols used! (127 is last col) */ \
-} while(0)
+	/* so h_off+25+15+28 = 98 ; \
+	 * And the last # starts here with len of about LINE_1U_LEN/2 ie 15 \
+	 * So, it's totally about 98+15 = 113 cols used! (127 is last col) \
+	 */
+} while (0)
+#endif
 
+static inline u8 centre_pos(s8);
 #define MAXCHARS_SMALLFONT	17
 // Approx centre the string
 static inline u8 centre_pos(s8 len)
@@ -255,16 +258,16 @@ static inline u8 setup_str_to_display(const char *buf, size_t len)
 {
 	/* If a newline's present, ignore it */
 	if (buf[len-1] == 0x0a)
-		len --;
+		len--;
 	return centre_pos(len);
 }
 
 #define	CLEAR_ROW(ROW)  do {  \
 	int j;  \
-	START_POS_SMALL_LETTERS(0,(ROW));  \
+	START_POS_SMALL_LETTERS(0, (ROW));  \
 	for (j = 0; j < MAX_COL+1; j++)  \
 		SSD1306_Write(DATA, 0x00);  \
-} while(0)
+} while (0)
 
 
 /*
@@ -273,7 +276,7 @@ static inline u8 setup_str_to_display(const char *buf, size_t len)
  * custom font.
  * Practically, it's meant for the use case where we display temperature
  * and humidity values...
- * 
+ *
  * TIP for userspace:
  * Do 'echo -n "XXXXX" > ...' not echo "XXXXX" > ...' to avoid passing the newline
  * char
@@ -327,59 +330,72 @@ static ssize_t rows2to6_large5_store(struct device *dev, struct device_attribute
 	}
 #endif
 	pr_debug("buf=%s len=%zu\n", buf, count);
-	
-	for (i=2; i<=6; i++)
+
+	for (i = 2; i <= 6; i++)
 		CLEAR_ROW(i);
 
-	for (i=0; i<count; i++) {
+	for (i = 0; i < count; i++) {
 		switch (buf[i]) {
-		case '0': DIGIT_0(X, Y);
+		case '0':
+			DIGIT_0(X, Y);
 			  /* Use a dynamic X (col) offset value; we use a table
 			   * lookup for it... idx is (buf[i]-48) as ASCII 48 is '0'
 			   */
-			  X += x_offset[(int)buf[i]-48];
-			  //X += h_off;
-			  break;
-		case '1': DIGIT_1(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '2': DIGIT_2(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '3': DIGIT_3(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '4': DIGIT_4(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '5': DIGIT_5(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '6': DIGIT_6(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '7': DIGIT_7(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '8': DIGIT_8(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '9': DIGIT_9(X, Y);
-			  X += x_offset[(int)buf[i]-48];
-			  break;
-		case '.': PERIOD(X, ROW_FOR_PERIOD);
-			  X += x_offset[(int)buf[i]-48];
-			  X += 12;
-			  break;
-		case 'C': LETTER_C(X_COL_FOR_C, Y);
-			  X += h_off;
-			  break;
+			X += x_offset[(int)buf[i]-48];
+			//X += h_off;
+			break;
+		case '1':
+			DIGIT_1(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '2':
+			DIGIT_2(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '3':
+			DIGIT_3(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '4':
+			DIGIT_4(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '5':
+			DIGIT_5(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '6':
+			DIGIT_6(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '7':
+			DIGIT_7(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '8':
+			DIGIT_8(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '9':
+			DIGIT_9(X, Y);
+			X += x_offset[(int)buf[i]-48];
+			break;
+		case '.':
+			PERIOD(X, ROW_FOR_PERIOD);
+			X += x_offset[(int)buf[i]-48];
+			X += 12;
+			break;
+		case 'C':
+			LETTER_C(X_COL_FOR_C, Y);
+			X += h_off;
+			break;
 		/* Exception: the '%' is in the small 8x8 font; at least
 		 * until we successfully render a large font ver
 		 */
-		case '%': PERCENT_SMALLFONT(X+7,Y+2);
-			  X += h_off;
-			  break;
+		case '%':
+			PERCENT_SMALLFONT(X+7, Y+2);
+			X += h_off;
+			break;
 #if 0
 		case 'H': //pr_debug("X=%d\n", X); /* 'C' or 'H' must be the last char */
 			  //LETTER_H(X, Y);
@@ -387,9 +403,10 @@ static ssize_t rows2to6_large5_store(struct device *dev, struct device_attribute
 			  X += h_off;
 			  break;
 #endif
-		default: dev_warn(dev, "INVALID char '%c'(0x%x)\n%s\n",
+		default:
+			dev_warn(dev, "INVALID char '%c'(0x%x)\n%s\n",
 				buf[i], buf[i], large_msg_warning);
-			  break;
+			break;
 		}
 	}
 	mutex_unlock(&mtx);
@@ -411,20 +428,20 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 	int j, len = strlen(buf);
 	s8 char2write;
 
-	if ((y<0 || (y>=2 && y != MAX_ROW_PAGE)) ||
-		((x<0) || (x>=MAX_COL-8)))
+	if ((y < 0 || (y >= 2 && y != MAX_ROW_PAGE)) ||
+		((x < 0) || (x >= MAX_COL-8)))
 		pr_debug("warning: exceeding row/col limits: trying to write to col %d row %d\n",
 			x, y);
 
 	/* If a newline's present, ignore it */
 	if (buf[len-1] == 0x0a)
-		len --;
+		len--;
 	if (len > MAXCHARS_SMALLFONT)
 		pr_debug("warning: exceeding max chars per row (%d), trying to write %d\n",
 			MAXCHARS_SMALLFONT, len);
 
 	CLEAR_ROW(y);
-	START_POS_SMALL_LETTERS(x,y);
+	START_POS_SMALL_LETTERS(x, y);
 	for (j = 0; j < len; j++) {
 		/* ONLY consider ASCII 48 - 58 (digits 0-9),
 		 * the uppercase letters A-Z, AND whitespace char (32)
@@ -449,7 +466,6 @@ static ssize_t writechar_row7_store(struct device *dev, struct device_attribute 
 			const char *buf, size_t count)
 {
 	//char *kbuf;
-	//s8 len = strlen(buf); //, col;
 
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
@@ -469,8 +485,8 @@ static ssize_t writechar_row7_store(struct device *dev, struct device_attribute 
 	len = strlen(kbuf);
 	//print_hex_dump_bytes("kbuf", DUMP_PREFIX_OFFSET, kbuf, len);
 	if (kbuf[len-1] == 0x0a) {
-		kbuf[len-1]='\0';
-		len --;
+		kbuf[len-1] = '\0';
+		len--;
 	}
 #endif
 
@@ -489,11 +505,8 @@ static DEVICE_ATTR_WO(writechar_row7);
 static ssize_t writechar_row1_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
-	//s8 len = strlen(buf), col;
-
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
-
 	write_string_smallfont(buf, setup_str_to_display(buf, count), 1);
 	mutex_unlock(&mtx);
 
@@ -507,11 +520,8 @@ static DEVICE_ATTR_WO(writechar_row1);
 static ssize_t writechar_row0_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
-	//s8 len = strlen(buf), col;
-
 	if (mutex_lock_interruptible(&mtx))
 		return -EINTR;
-
 	write_string_smallfont(buf, setup_str_to_display(buf, count), 0);
 	mutex_unlock(&mtx);
 

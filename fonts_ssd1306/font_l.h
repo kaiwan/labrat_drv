@@ -19,38 +19,37 @@
 
 #ifdef USE_3D_FONT
 static unsigned char line_h_bits_3D[] = {  /* 4 vertical lines in 'bitmap' app
-   which then get rotated clockwise 90 degrees on the OLED when in landscape mode.
-   Now the line thickness is slightly better
-   */
+ *  which then get rotated clockwise 90 degrees on the OLED when in landscape mode.
+ *  Now the line thickness is slightly better
+ */
    // Interesting!! this one - where the h line is tapered at both ends -
    // (font_bitmaps/line-h-t.h) causes a 3D effect !!
-   0x80, 0x00, 0x40, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01,
-   0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01,
-   0xc0, 0x01, 0xc0, 0x01, 0x40, 0x01, 0x80, 0x00};
+0x80, 0x00, 0x40, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01,
+0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01, 0xc0, 0x01,
+0xc0, 0x01, 0xc0, 0x01, 0x40, 0x01, 0x80, 0x00};
 #else
 /* ORIG - 2D: */
 static unsigned char line_h_bits[] = {
-   0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00,
-   0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00,
-   0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00};
+0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00,
+0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00,
+0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00, 0x0f, 0x00};
 #endif
 
 #if 0
-  /* 2 vertical lines in 'bitmap' app
-   which then get rotated clockwise 90 degrees on the OLED when in landscape mode
-   0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00,
-   0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00,
-   0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00}; 
-   */
+/* 2 vertical lines in 'bitmap' app
+ * which then get rotated clockwise 90 degrees on the OLED when in landscape mode
+ * 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00,
+ * 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00,
+ * 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00};
+ */
 #endif
 
-
 static unsigned char line_v_bits[] = {  /* 2 horiontal lines in 'bitmap' app
-   which then get rotated clockwise 90 degrees on the OLED when in landscape mode
-   */
-   0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+ * which then get rotated clockwise 90 degrees on the OLED when in landscape mode
+ */
+0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 /*
 static unsigned char line_slash_bits[] = {
@@ -63,9 +62,7 @@ static unsigned char line_slash_bits[] = {
    0x1e, 0x00, 0x0f, 0x00, 0x07, 0x00, 0x03, 0x00};*/
 
 static unsigned char percent_bits[] = {
-   0x00, 0x44, 0x24, 0x10, 0x08, 0x24, 0x22, 0x00};
-
-
+0x00, 0x44, 0x24, 0x10, 0x08, 0x24, 0x22, 0x00};
 
 /* See SSD1306 Solomon Systech datasheet Rev 1.1 pg 31 1st table 1st row */
 // Our addr mode is Horizontal
@@ -79,12 +76,12 @@ static unsigned char percent_bits[] = {
 	SSD1306_Write(CMD, CMD_SET_PAGE_ROW_0TO7); \
 	SSD1306_Write(CMD, (S)); \
 	SSD1306_Write(CMD, (E)); \
-} while(0)
+} while (0)
 #define SET_START_END_COLS(S, E) do { \
 	SSD1306_Write(CMD, CMD_SET_COL_0TO127); \
 	SSD1306_Write(CMD, (S)); \
 	SSD1306_Write(CMD, MAX_COL); \
-} while(0)
+} while (0)
 
 #define	SET_START2BLUE_LINE1 SSD1306_Write(CMD, 0x23) /* start page 3 - 1st blue line! */
 #define	SET_START2BLUE_LINE2 SSD1306_Write(CMD, 0x24) /* start page 4 - 2nd blue line! */
@@ -120,79 +117,79 @@ The 7 segments:
 
  */
 //---------- HORIZONTAL LINEs (LANDSCAPE orientation) ------------------
-#define __LINE_H_1U(X,Y,COUNT) do { \
+#define __LINE_H_1U(X, Y, COUNT) do { \
 	int i; \
-	if (((Y)>=0) && ((Y)<=MAX_ROW_PAGE) && \
-		((X)>=0) && ((X)<=MAX_COL-(COUNT))) { \
-		SET_START_END_PAGES((Y),0); \
-		SET_START_END_COLS((X),(X)+(COUNT)); \
-		for (i=0; i<(COUNT); i++) \
+	if (((Y) >= 0) && ((Y) <= MAX_ROW_PAGE) && \
+		((X) >= 0) && ((X) <= MAX_COL-(COUNT))) { \
+		SET_START_END_PAGES((Y), 0); \
+		SET_START_END_COLS((X), (X)+(COUNT)); \
+		for (i = 0; i < (COUNT); i++) \
 			SSD1306_Write(DATA, line_h_bits[i]); \
 	} \
 	else \
 		pr_debug("LINE_H_1U:--out of range--\n"); \
 } while (0)
-#define LINE_H_1U(X,Y) __LINE_H_1U((X),(Y),LINE_1U_LEN);
+#define LINE_H_1U(X, Y) __LINE_H_1U((X), (Y), LINE_1U_LEN)
 
-/* 
+/*
  * TODO / RELOOK
  * The 1.5U, 2U, etc macros - which draw line lengths of 1.5x, 2x, ... -
  * currently don't do a validity check before issuing the underlying
  * 'fundamental' __LINE_H_1U(); thus, we can get partial success
-   (Done for the Vertical lines; need to imitate that..)
+ * (Done for the Vertical lines; need to imitate that..)
  */
-#define LINE_H_HALFU(X,Y) __LINE_H_1U((X),(Y),(LINE_1U_LEN/2));
-#define LINE_H_2U(X,Y) do { \
-	LINE_H_1U((X),(Y)); \
-	LINE_H_1U((X+LINE_1U_LEN),(Y)); \
+#define LINE_H_HALFU(X, Y) __LINE_H_1U((X), (Y), (LINE_1U_LEN/2))
+#define LINE_H_2U(X, Y) do { \
+	LINE_H_1U((X), (Y)); \
+	LINE_H_1U((X+LINE_1U_LEN), (Y)); \
 } while (0)
-#define LINE_H_1PT5U(X,Y) do { \
-	LINE_H_1U((X),(Y)); \
-	LINE_H_HALFU((X+LINE_1U_LEN),(Y)); \
+#define LINE_H_1PT5U(X, Y) do { \
+	LINE_H_1U((X), (Y)); \
+	LINE_H_HALFU((X+LINE_1U_LEN), (Y)); \
 } while (0)
-#define LINE_H_3U(X,Y) do { \
-	LINE_H_1U((X),(Y)); \
-	LINE_H_1U((X+LINE_1U_LEN),(Y)); \
-	LINE_H_1U((X+2*LINE_1U_LEN),(Y)); \
+#define LINE_H_3U(X, Y) do { \
+	LINE_H_1U((X), (Y)); \
+	LINE_H_1U((X+LINE_1U_LEN), (Y)); \
+	LINE_H_1U((X+2*LINE_1U_LEN), (Y)); \
 } while (0)
 //---------------------------------------------------------------------
 
 //---------- VERTICAL LINEs (LANDSCAPE orientation) -------------------
-#define __LINE_V_1U(X,Y,COUNT) do { \
+#define __LINE_V_1U(X, Y, COUNT) do { \
 	int i; \
-	if (((Y)>=0) && ((Y)<=MAX_ROW_PAGE-1) && \
-		((X)>=0) && ((X)<=MAX_COL)) { \
-		SET_START_END_PAGES((Y),0); \
-		SET_START_END_COLS((X),(X)+(COUNT)); \
-		for (i=0; i<(COUNT); i++) \
+	if (((Y) >= 0) && ((Y) <= MAX_ROW_PAGE-1) && \
+		((X) >= 0) && ((X) <= MAX_COL)) { \
+		SET_START_END_PAGES((Y), 0); \
+		SET_START_END_COLS((X), (X)+(COUNT)); \
+		for (i = 0; i < (COUNT); i++) \
 			SSD1306_Write(DATA, line_v_bits[i]); \
 	} \
 	else \
 		pr_debug("LINE_V_1U:--out of range--\n"); \
 } while (0)
-#define LINE_V_1U(X,Y) __LINE_V_1U((X),(Y),LINE_1U_LEN);
-//#define LINE_V_HALFU(X,Y) __LINE_V_1U((X),(Y),(LINE_1U_LEN/2));
-#define LINE_V_2U(X,Y) do { \
-	if (((Y)+1)<=MAX_ROW_PAGE-1) { \
-		LINE_V_1U((X),(Y)); \
-		LINE_V_1U((X),(Y+1)); \
+#define LINE_V_1U(X, Y) __LINE_V_1U((X), (Y), LINE_1U_LEN)
+//#define LINE_V_HALFU(X, Y) __LINE_V_1U((X), (Y), (LINE_1U_LEN/2))
+#define LINE_V_2U(X, Y) do { \
+	if (((Y)+1) <= MAX_ROW_PAGE-1) { \
+		LINE_V_1U((X), (Y)); \
+		LINE_V_1U((X), (Y+1)); \
 	} else \
 		pr_debug("LINE_V_2U:--out of range--\n"); \
 } while (0)
-#define LINE_V_3U(X,Y) do { \
-	if (((Y)+2)<=MAX_ROW_PAGE-1) { \
-		LINE_V_1U((X),(Y)); \
-		LINE_V_1U((X),(Y+1)); \
-		LINE_V_1U((X),(Y+2)); \
+#define LINE_V_3U(X, Y) do { \
+	if (((Y)+2) <= MAX_ROW_PAGE-1) { \
+		LINE_V_1U((X), (Y)); \
+		LINE_V_1U((X), (Y+1)); \
+		LINE_V_1U((X), (Y+2)); \
 	} else \
 		pr_debug("LINE_V_3U:--out of range--\n"); \
 } while (0)
-#define LINE_V_4U(X,Y) do { \
-	if (((Y)+3)<=MAX_ROW_PAGE-1) { \
-		LINE_V_1U((X),(Y)); \
-		LINE_V_1U((X),(Y+1)); \
-		LINE_V_1U((X),(Y+2)); \
-		LINE_V_1U((X),(Y+3)); \
+#define LINE_V_4U(X, Y) do { \
+	if (((Y)+3) <= MAX_ROW_PAGE-1) { \
+		LINE_V_1U((X), (Y)); \
+		LINE_V_1U((X), (Y+1)); \
+		LINE_V_1U((X), (Y+2)); \
+		LINE_V_1U((X), (Y+3)); \
 	} else \
 		pr_debug("LINE_V_4U:--out of range--\n"); \
 } while (0)
@@ -200,24 +197,24 @@ The 7 segments:
 //---------------------------------------------------------------------
 
 //---------- SLASH "/" 45 degree LINEs (LANDSCAPE orientation) ------------------
-#define __LINE_SLASH_1U(X,Y,COUNT) do { \
+#define __LINE_SLASH_1U(X, Y, COUNT) do { \
 	int i; \
-	if (((Y)>=0) && ((Y)<=MAX_ROW_PAGE) && \
-		((X)>=0) && ((X)<=MAX_COL-(COUNT))) { \
-		SET_START_END_PAGES((Y),0); \
-		SET_START_END_COLS((X),(X)+(COUNT)); \
-		for (i=0; i<(COUNT)/2; i++) \
+	if (((Y) >= 0) && ((Y) <= MAX_ROW_PAGE) && \
+		((X) >= 0) && ((X) <= MAX_COL-(COUNT))) { \
+		SET_START_END_PAGES((Y), 0); \
+		SET_START_END_COLS((X), (X)+(COUNT)); \
+		for (i = 0; i < (COUNT)/2; i++) \
 			SSD1306_Write(DATA, line_slash_bits[i]); \
 	} \
 	else \
 		pr_debug("LINE_SLASH_1U:--out of range--\n"); \
 } while (0)
-#define LINE_SLASH_1U(X,Y) __LINE_SLASH_1U((X),(Y),LINE_1U_LEN);
+#define LINE_SLASH_1U(X, Y) __LINE_SLASH_1U((X), (Y), LINE_1U_LEN)
 
-#define LINE_SLASH_2U(X,Y) do { \
-	if (((Y)+2)<=MAX_ROW_PAGE-1) { \
-		LINE_SLASH_1U((X),(Y)); \
-		LINE_SLASH_1U((X)+LINE_1U_LEN/2,(Y-1)); \
+#define LINE_SLASH_2U(X, Y) do { \
+	if (((Y)+2) <= MAX_ROW_PAGE-1) { \
+		LINE_SLASH_1U((X), (Y)); \
+		LINE_SLASH_1U((X)+LINE_1U_LEN/2, (Y-1)); \
 	} else \
 		pr_debug("LINE_SLASH_2U:--out of range--\n"); \
 } while (0)
@@ -234,28 +231,28 @@ The 7 segments:
  * <In the bitmap app, after drawing it, press lower-left (SW) arrow followed
  *  by the upper-left (NW) arrow to do the xform>
  */
-#define DIGIT_0(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
-	LINE_H_HALFU((X)+5,(Y)); \
-	LINE_V_4U((X)+LINE_1U_LEN/2,(Y)); \
-	LINE_H_HALFU((X),(Y)+4); \
+#define DIGIT_0(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
+	LINE_H_HALFU((X)+5, (Y)); \
+	LINE_V_4U((X)+LINE_1U_LEN/2, (Y)); \
+	LINE_H_HALFU((X), (Y)+4); \
 } while (0)
-#define DIGIT_1(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
+#define DIGIT_1(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
 } while (0)
-#define DIGIT_2(X,Y) do { \
-	LINE_H_HALFU((X),(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2,(Y)); \
-	LINE_V_2U((X),(Y)+2); \
-	LINE_H_HALFU((X),(Y)+4); \
-	LINE_H_HALFU((X)+5,(Y)+2); \
+#define DIGIT_2(X, Y) do { \
+	LINE_H_HALFU((X), (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2, (Y)); \
+	LINE_V_2U((X), (Y)+2); \
+	LINE_H_HALFU((X), (Y)+4); \
+	LINE_H_HALFU((X)+5, (Y)+2); \
 } while (0)
-#define DIGIT_3(X,Y) do { \
-	LINE_H_HALFU((X),(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2,(Y)); \
-	LINE_H_HALFU((X)+5,(Y)+2); \
-	LINE_V_2U((X)+15,(Y)+2); \
-	LINE_H_HALFU((X),(Y)+4); \
+#define DIGIT_3(X, Y) do { \
+	LINE_H_HALFU((X), (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2, (Y)); \
+	LINE_H_HALFU((X)+5, (Y)+2); \
+	LINE_V_2U((X)+15, (Y)+2); \
+	LINE_H_HALFU((X), (Y)+4); \
 } while (0)
 /* 4; origin is the upper tip of the 4
  * BUT- the slash portion's far too wide ??
@@ -264,10 +261,10 @@ The 7 segments:
  *  |__|
  *     |
  */
-#define DIGIT_4(X,Y) do { \
-	LINE_V_3U((X),(Y)); \
-	LINE_H_HALFU((X)+2,(Y)+3); \
-	LINE_V_2U((X)+LINE_1U_LEN/2,(Y)+2); \
+#define DIGIT_4(X, Y) do { \
+	LINE_V_3U((X), (Y)); \
+	LINE_H_HALFU((X)+2, (Y)+3); \
+	LINE_V_2U((X)+LINE_1U_LEN/2, (Y)+2); \
 } while (0)
 /*
 #define DIGIT_4(X,Y) do { \
@@ -276,54 +273,54 @@ The 7 segments:
 	LINE_H_1U((X)-(LINE_1U_LEN/2)+3,(Y)+2); \
 } while (0) */
 
-#define DIGIT_5(X,Y) do { \
-	LINE_V_2U((X),(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2-1,(Y)+2); \
-	LINE_H_HALFU((X)+1,(Y)); \
-	LINE_H_HALFU((X)+2,(Y)+2); \
-	LINE_H_HALFU((X)+2,(Y)+4); \
+#define DIGIT_5(X, Y) do { \
+	LINE_V_2U((X), (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2-1, (Y)+2); \
+	LINE_H_HALFU((X)+1, (Y)); \
+	LINE_H_HALFU((X)+2, (Y)+2); \
+	LINE_H_HALFU((X)+2, (Y)+4); \
 } while (0)
-#define DIGIT_6(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2-1,(Y)+2); \
-	LINE_H_HALFU((X)+1,(Y)); \
-	LINE_H_HALFU((X)+2,(Y)+2); \
-	LINE_H_HALFU((X)+2,(Y)+4); \
+#define DIGIT_6(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2-1, (Y)+2); \
+	LINE_H_HALFU((X)+1, (Y)); \
+	LINE_H_HALFU((X)+2, (Y)+2); \
+	LINE_H_HALFU((X)+2, (Y)+4); \
 } while (0)
-#define DIGIT_7(X,Y) do { \
-	LINE_H_HALFU((X),(Y)); \
-	LINE_V_4U((X)+LINE_1U_LEN/2,(Y)); \
+#define DIGIT_7(X, Y) do { \
+	LINE_H_HALFU((X), (Y)); \
+	LINE_V_4U((X)+LINE_1U_LEN/2, (Y)); \
 } while (0)
-#define DIGIT_8(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2-1,(Y)); \
-	LINE_V_2U((X)+LINE_1U_LEN/2-1,(Y)+2); \
-	LINE_H_HALFU((X)+2,(Y)); \
-	LINE_H_HALFU((X)+2,(Y)+2); \
-	LINE_H_HALFU((X)+2,(Y)+4); \
+#define DIGIT_8(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2-1, (Y)); \
+	LINE_V_2U((X)+LINE_1U_LEN/2-1, (Y)+2); \
+	LINE_H_HALFU((X)+2, (Y)); \
+	LINE_H_HALFU((X)+2, (Y)+2); \
+	LINE_H_HALFU((X)+2, (Y)+4); \
 } while (0)
-#define DIGIT_9(X,Y) do { \
-	LINE_V_2U((X),(Y)); \
-	LINE_H_HALFU((X)+1,(Y)); \
-	LINE_H_HALFU((X),(Y)+2); \
-	LINE_V_4U((X)+LINE_1U_LEN/2,(Y)); \
-} while (0)
-
-
-#define PERIOD(X,Y) do { \
-	LINE_V_1U((X),(Y)); \
-	LINE_V_1U((X)+5,(Y)); \
+#define DIGIT_9(X, Y) do { \
+	LINE_V_2U((X), (Y)); \
+	LINE_H_HALFU((X)+1, (Y)); \
+	LINE_H_HALFU((X), (Y)+2); \
+	LINE_V_4U((X)+LINE_1U_LEN/2, (Y)); \
 } while (0)
 
-#define LETTER_C(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
-	LINE_H_HALFU((X)+3,(Y)); \
-	LINE_H_HALFU((X)+3,(Y)+4); \
+
+#define PERIOD(X, Y) do { \
+	LINE_V_1U((X), (Y)); \
+	LINE_V_1U((X)+5, (Y)); \
 } while (0)
-#define LETTER_H(X,Y) do { \
-	LINE_V_4U((X),(Y)); \
-	LINE_V_4U((X)+LINE_1U_LEN/2,(Y)); \
-	LINE_H_HALFU((X)+3,(Y)+2); \
+
+#define LETTER_C(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
+	LINE_H_HALFU((X)+3, (Y)); \
+	LINE_H_HALFU((X)+3, (Y)+4); \
+} while (0)
+#define LETTER_H(X, Y) do { \
+	LINE_V_4U((X), (Y)); \
+	LINE_V_4U((X)+LINE_1U_LEN/2, (Y)); \
+	LINE_H_HALFU((X)+3, (Y)+2); \
 } while (0)
 
 //---------------------------------------------------------------------
@@ -358,21 +355,21 @@ The 7 segments:
  */
 static u8 render_smallfont[91][8] = {
 	// element #s 0 to 31 follow... they're currently ignored
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
-	{0x0},{0x0},{0x0},{0x0},			// idx 31
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
+	{0x0}, {0x0}, {0x0}, {0x0},			// idx 31
 	//----- ASCII 32 is ' ' whitespace
-	{0x00,0x00,0x00,0x00,0x00,0x00,0x00},		// ' ' ; idx 32
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},		// ' ' ; idx 32
 	// element #s 33 to 47 follow... they're currently ignored
 	// element #s 33 to 36 follow... they're currently ignored
-	{0x0},{0x0},{0x0},{0x0},
+	{0x0}, {0x0}, {0x0}, {0x0},
 	//----- ASCII 37 is '%'
-	{0x00,0x44,0x24,0x10,0x08,0x24,0x22,0x00},	// '%' ; idx 37
+	{0x00, 0x44, 0x24, 0x10, 0x08, 0x24, 0x22, 0x00},	// '%' ; idx 37
 	// element #s 38 to 47 follow... they're currently ignored
-	{0x0},{0x0},
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
+	{0x0}, {0x0},
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
 	{0x0},						// idx 47
 	/*------ASCII 48 is 0 ------------------------------*/
 	// element #s 0 to 9 follow... they're the digits 0 to 9
@@ -389,7 +386,7 @@ static u8 render_smallfont[91][8] = {
 	/*------ASCII 58 is : -------------------------------
 	 * We're currently ignoring ASCII 58 to 64 inclusive... that's 7 chars */
 	// element #s 10 to 16 follow... they're currently ignored
-	{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},{0x0},
+	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
 	// element #s 17 to __ follow... they're the capital letters A to Z
 	{0xc0, 0x38, 0x16, 0x11, 0x11, 0x16, 0x38, 0xc0}, // A ; idx 65
 	{0x00, 0xff, 0x99, 0x99, 0x5a, 0x3c, 0x00, 0x00}, // B
@@ -428,9 +425,9 @@ static u8 render_smallfont[91][8] = {
  * so no need to specify every x,y; just the starting one is specified
  * when drawing small font text..
  */
-#define START_POS_SMALL_LETTERS(X,Y) do { \
-		SET_START_END_COLS((X),MAX_COL); \
-		SET_START_END_PAGES((Y),0); \
+#define START_POS_SMALL_LETTERS(X, Y) do { \
+		SET_START_END_COLS((X), MAX_COL); \
+		SET_START_END_PAGES((Y), 0); \
 } while (0)
 /*	if ((Y)>=0 && ((Y)<=2 || (Y) == MAX_ROW_PAGE) && \
 		((X)>=0) && ((X)<=MAX_COL-8)) { \
@@ -448,10 +445,10 @@ static u8 render_smallfont[91][8] = {
 #define LETTER_C_SMALLFONT RENDER_SMALLFONT(0xc)
 
 
-#define PERCENT_SMALLFONT(X,Y) do { \
+#define PERCENT_SMALLFONT(X, Y) do { \
 	int i; \
-	SET_START_END_PAGES((Y),0); \
-	SET_START_END_COLS((X),(X)); \
+	SET_START_END_PAGES((Y), 0); \
+	SET_START_END_COLS((X), (X)); \
 	for (i = 0; i < 7; i++) \
 		SSD1306_Write(DATA, percent_bits[i]); \
 } while (0)
