@@ -5,6 +5,7 @@
 We assume the OLED SSD1306 is in landscape orientation..
 
 Dimensions in landscape orientation (which we always assume its in):
+
  18 x 8 (cols x rows)
 
 Colo(u)rs:
@@ -17,7 +18,6 @@ You can render the display in two fonts:
  1. The 'default' small 8x8 bit font:  
  Supported characters:
    `A-Z, 0-9, space, %`
- 2. 
 
  2. The 'LARGE' font:
 
@@ -34,18 +34,26 @@ The ssd1306 kernel module driver sets up several sysfs pseudofiles which is of
 course the interface via which we can write to the rows of the display; the
 following sysfs entries are created under (typically)
 
-`ls -l /sys/bus/i2c/devices/1-003c/ `
+`ls -l /sys/bus/i2c/devices/1-003c/ 
   
-`...`
-  
-`--w--w--w- 1 root root 4.0K Nov  2 16:09 write_largefont_rows2to6
+...
+
+--w--w--w- 1 root root 4.0K Nov  2 16:09 write_largefont_rows2to6
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row0
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row1
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row2
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row3
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row4
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row5
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row6
+
 --w--w--w- 1 root root 4.0K Nov  2 16:10 write_smallfont_to_row7
 `
 
