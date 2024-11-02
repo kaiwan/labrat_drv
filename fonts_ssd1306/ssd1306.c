@@ -238,7 +238,7 @@ static void SSD1306_Fill(unsigned char data)
 #endif
 
 static inline u8 centre_pos(s8);
-#define MAXCHARS_SMALLFONT	17
+#define MAXCHARS_SMALLFONT	18
 // Approx centre the string
 static inline u8 centre_pos(s8 len)
 {
@@ -281,7 +281,7 @@ static inline u8 setup_str_to_display(const char *buf, size_t len)
  * Do 'echo -n "XXXXX" > ...' not echo "XXXXX" > ...' to avoid passing the newline
  * char
  */
-static ssize_t rows2to6_large5_store(struct device *dev, struct device_attribute *attr,
+static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	int i, h_off = 20;
@@ -413,11 +413,11 @@ static ssize_t rows2to6_large5_store(struct device *dev, struct device_attribute
 
 	return count;
 }
-static DEVICE_ATTR_WO(rows2to6_large5);
+static DEVICE_ATTR_WO(write_largefont_rows2to6);
 
 /*
  * 3 rows available on the OLED in landscape mode: 0, 1 and 7 only.
- * The MAX # of chars in a single row: 16
+ * The MAX # of chars in a single row: MAXCHARS_SMALLFONT (18)
  * ASSUMPTIONS:
  * - OLED display is in landscape orientation
  * - 'buf' contains an ASCIIZ string (NUL-terminated)
@@ -428,7 +428,7 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 	int j, len = strlen(buf);
 	s8 char2write;
 
-	if ((y < 0 || (y >= 2 && y != MAX_ROW_PAGE)) ||
+	if ((y < 0 || (y > MAX_ROW_PAGE)) ||
 		((x < 0) || (x >= MAX_COL-8)))
 		pr_debug("warning: exceeding row/col limits: trying to write to col %d row %d\n",
 			x, y);
@@ -437,14 +437,15 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 	if (buf[len-1] == 0x0a)
 		len--;
 	if (len > MAXCHARS_SMALLFONT)
-		pr_debug("warning: exceeding max chars per row (%d), trying to write %d\n",
-			MAXCHARS_SMALLFONT, len);
+		pr_debug("warning: exceeding max chars per row (%d), trying to write %d\nstr: %s\n",
+			MAXCHARS_SMALLFONT, len, buf);
 
 	CLEAR_ROW(y);
 	START_POS_SMALL_LETTERS(x, y);
 	for (j = 0; j < len; j++) {
 		/* ONLY consider ASCII 48 - 58 (digits 0-9),
 		 * the uppercase letters A-Z, AND whitespace char (32)
+		 * NO.. this is v limiting..
 		 */
 		char2write = toupper(buf[j]);
 		//pr_debug("buf = %c(%d)\n", buf[j], (int)buf[j]);
@@ -462,7 +463,7 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
  * Write the user-supplied string to row 7 of the OLED (landscape orientation assumed)
  * ASSUME that 'buf' contains an ASCIIZ string (NUL-terminated)
  */
-static ssize_t writechar_row7_store(struct device *dev, struct device_attribute *attr,
+static ssize_t write_smallfont_to_row7_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	//char *kbuf;
@@ -497,12 +498,81 @@ static ssize_t writechar_row7_store(struct device *dev, struct device_attribute 
 
 	return count;
 }
-static DEVICE_ATTR_WO(writechar_row7);
+static DEVICE_ATTR_WO(write_smallfont_to_row7);
+/*
+ * Write the user-supplied string to row 6 of the OLED (landscape orientation assumed)
+ */
+static ssize_t write_smallfont_to_row6_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	write_string_smallfont(buf, setup_str_to_display(buf, count), 6);
+	mutex_unlock(&mtx);
 
+	return count;
+}
+static DEVICE_ATTR_WO(write_smallfont_to_row6);
+/*
+ * Write the user-supplied string to row 5 of the OLED (landscape orientation assumed)
+ */
+static ssize_t write_smallfont_to_row5_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	write_string_smallfont(buf, setup_str_to_display(buf, count), 5);
+	mutex_unlock(&mtx);
+
+	return count;
+}
+static DEVICE_ATTR_WO(write_smallfont_to_row5);
+/*
+ * Write the user-supplied string to row 4 of the OLED (landscape orientation assumed)
+ */
+static ssize_t write_smallfont_to_row4_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	write_string_smallfont(buf, setup_str_to_display(buf, count), 4);
+	mutex_unlock(&mtx);
+
+	return count;
+}
+static DEVICE_ATTR_WO(write_smallfont_to_row4);
+/*
+ * Write the user-supplied string to row 3 of the OLED (landscape orientation assumed)
+ */
+static ssize_t write_smallfont_to_row3_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	write_string_smallfont(buf, setup_str_to_display(buf, count), 3);
+	mutex_unlock(&mtx);
+
+	return count;
+}
+static DEVICE_ATTR_WO(write_smallfont_to_row3);
+/*
+ * Write the user-supplied string to row 2 of the OLED (landscape orientation assumed)
+ */
+static ssize_t write_smallfont_to_row2_store(struct device *dev, struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	if (mutex_lock_interruptible(&mtx))
+		return -EINTR;
+	write_string_smallfont(buf, setup_str_to_display(buf, count), 2);
+	mutex_unlock(&mtx);
+
+	return count;
+}
+static DEVICE_ATTR_WO(write_smallfont_to_row2);
 /*
  * Write the user-supplied string to row 1 of the OLED (landscape orientation assumed)
  */
-static ssize_t writechar_row1_store(struct device *dev, struct device_attribute *attr,
+static ssize_t write_smallfont_to_row1_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	if (mutex_lock_interruptible(&mtx))
@@ -512,12 +582,12 @@ static ssize_t writechar_row1_store(struct device *dev, struct device_attribute 
 
 	return count;
 }
-static DEVICE_ATTR_WO(writechar_row1);
+static DEVICE_ATTR_WO(write_smallfont_to_row1);
 
 /*
  * Write the user-supplied string to row 0 of the OLED (landscape orientation assumed)
  */
-static ssize_t writechar_row0_store(struct device *dev, struct device_attribute *attr,
+static ssize_t write_smallfont_to_row0_store(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	if (mutex_lock_interruptible(&mtx))
@@ -527,7 +597,7 @@ static ssize_t writechar_row0_store(struct device *dev, struct device_attribute 
 
 	return count;
 }
-static DEVICE_ATTR_WO(writechar_row0);
+static DEVICE_ATTR_WO(write_smallfont_to_row0);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 static void ssd1306_remove(struct i2c_client *client)
@@ -544,11 +614,16 @@ static int ssd1306_remove(struct i2c_client *client)
 	device_remove_file(&client->dev, &dev_attr_col_start);
 #endif
 
-	device_remove_file(&client->dev, &dev_attr_rows2to6_large5);
-	device_remove_file(&client->dev, &dev_attr_writechar_row7);
-	device_remove_file(&client->dev, &dev_attr_writechar_row1);
-	device_remove_file(&client->dev, &dev_attr_writechar_row0);
-	pr_info("5 sysfs files removed, display Off\n");
+	device_remove_file(&client->dev, &dev_attr_write_largefont_rows2to6);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row7);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row6);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row5);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row4);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row3);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row2);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row1);
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row0);
+	pr_info("all sysfs files removed, display Off\n");
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
 	return 0;
@@ -580,34 +655,82 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	SSD1306_DisplayInit();
 	SSD1306_Fill(0x00);	// fill the OLED with this data
 
-	// Create the sysfs pseudofiles
-	ret = device_create_file(&client->dev, &dev_attr_writechar_row0);
+	/* Create the sysfs pseudofiles, one for each display row we can write to
+	 * (so a total of 8 as there are 8 rows)
+	 * Well, row 0 to row 7 small 8x8 font write AND 
+	 * one sysfile entry for rows 2-6 LARGE font write (typically for the
+	 * Temperature / Humidity values to be displayed)
+	 */
+	// rows 0 to 7 : SMALL 8x8 font display
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row0);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry writechar_row0 failed");
-		return -ENODEV;
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row0 failed");
+		goto out_fail0;
 	}
-	ret = device_create_file(&client->dev, &dev_attr_writechar_row1);
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row1);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry writechar_row1 failed");
-		device_remove_file(&client->dev, &dev_attr_writechar_row0);
-		return -ENODEV;
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row1 failed");
+		goto out_fail1;
 	}
-	ret = device_create_file(&client->dev, &dev_attr_writechar_row7);
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row2);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry writechar_row7 failed");
-		device_remove_file(&client->dev, &dev_attr_writechar_row0);
-		device_remove_file(&client->dev, &dev_attr_writechar_row1);
-		return -ENODEV;
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row2 failed");
+		goto out_fail2;
 	}
-	ret = device_create_file(&client->dev, &dev_attr_rows2to6_large5);
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row3);
 	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry rows2to6_large5 failed");
-		device_remove_file(&client->dev, &dev_attr_writechar_row0);
-		device_remove_file(&client->dev, &dev_attr_writechar_row1);
-		device_remove_file(&client->dev, &dev_attr_writechar_row7);
-		return -ENODEV;
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row3 failed");
+		goto out_fail3;
+	}
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row4);
+	if (ret < 0) {
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row4 failed");
+		goto out_fail4;
+	}
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row5);
+	if (ret < 0) {
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row5 failed");
+		goto out_fail5;
+	}
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row6);
+	if (ret < 0) {
+	//if (ret == 0) {
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row6 failed");
+		goto out_fail6;
+	}
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row7);
+	if (ret < 0) {
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row7 failed");
+		goto out_fail7;
+	}
+	// rows 2 to 6 : LARGE font display
+	ret = device_create_file(&client->dev, &dev_attr_write_largefont_rows2to6);
+	if (ret < 0) {
+		dev_info(dev, "creating sysfs entry write_largefont_rows2to6 failed");
+		goto out_fail8;
 	}
 
+	dev_info(dev, "all sysfs files setup, display On\n");
+	return ret;
+
+out_fail8:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row7);
+out_fail7:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row6);
+out_fail6:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row5);
+out_fail5:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row4);
+out_fail4:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row3);
+out_fail3:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row2);
+out_fail2:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row1);
+out_fail1:
+	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row0);
+out_fail0:
+	return -ENODEV;
 #if 0
 	ret = device_create_file(&client->dev, &dev_attr_row_start);
 	if (ret < 0) {
@@ -630,9 +753,6 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 		return -ENODEV;
 	}
 #endif
-	dev_info(dev, "3 sysfs files setup, display On\n");
-
-	return ret;
 }
 
 /*------- Matching the driver to the device ------------------
