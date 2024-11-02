@@ -1,15 +1,91 @@
 #!/bin/bash
-
-ROW0=/sys/bus/i2c/devices/1-003c/writechar_row0
-ROW1=/sys/bus/i2c/devices/1-003c/writechar_row1
-ROW7=/sys/bus/i2c/devices/1-003c/writechar_row7
-ROW3TO6_LARGE=/sys/bus/i2c/devices/1-003c/rows2to6_large5
+# SSD1306 OLED display tester/demo script
+#----------------------------------------------------------------------
+# Dimensions in landscape orientation (which we always assume its in):
+#  18x8 (cols x rows)
+#
+# Colo(u)rs:
+#  Row 0 and row 1 renders in yellow color
+#  Rows 2 to 7 render in blue color
+#
+# You can render the display in two fonts:
+# 1. The 'default' small 8x8 bit font:
+#    Supported characters:
+#    A-Z, digits 0-9, space, %
+# 2. The 'LARGE' font:
+#    This renders only a few supported chars in a 'large' font occupying rows 2 to 6
+#    (thus rows 0, 1 and 7 are still available for small font chars)
+#    Supported characters:
+#    digits 0-9, space, C, %
+#    [This particular implementation's geared towards rendering a Temperature and
+#     Humidity values in Celsius (C) or as a percentage (%) resp]
+#----------------------------------------------------------------------
+SYSFS_DIR=/sys/bus/i2c/devices/1-003c
+ROW0=${SYSFS_DIR}/write_smallfont_to_row0
+ROW1=${SYSFS_DIR}/write_smallfont_to_row1
+ROW2=${SYSFS_DIR}/write_smallfont_to_row2
+ROW3=${SYSFS_DIR}/write_smallfont_to_row3
+ROW4=${SYSFS_DIR}/write_smallfont_to_row4
+ROW5=${SYSFS_DIR}/write_smallfont_to_row5
+ROW6=${SYSFS_DIR}/write_smallfont_to_row6
+ROW7=${SYSFS_DIR}/write_smallfont_to_row7
+ROWS2TO6_LARGE=${SYSFS_DIR}/write_largefont_rows2to6
 
 clrscr()
 {
-echo '' > ${ROW0}
-echo '' > ${ROW1}
-echo '' > ${ROW7}
+local i row
+for i in $(seq 0 7)
+do
+#eval "echo \${$myvar}"
+	row=ROW${i}
+	# place one variable within another! ref: https://unix.stackexchange.com/a/41409/55746
+	eval "echo '' > \${$row}"
+done
+}
+
+eip()
+{
+echo 'Env Info Prj' > ${ROW7}
+while [ true ] ; do
+   for i in $(seq 0 9) ; do
+	#echo -n "7.${i}H" > ${ROWS2TO6_LARGE}
+	echo 'TEMPERATURE' > ${ROW0}
+	echo -n "28.${i}C" > ${ROWS2TO6_LARGE}
+	sleep 2
+	echo 'HUMIDITY %' > ${ROW0}
+	echo -n "88.${i}%" > ${ROWS2TO6_LARGE}
+	sleep 2
+   done
+done
+}
+
+# $1 : string to vertically display downwards from row 0 to row 7
+fill_all_rows_smallfont()
+{
+[[ $# -eq 0 ]] && return
+local i row
+for i in $(seq 0 7)
+do
+	row="ROW${i}"
+	#echo -n "row $i" > ${row}
+	eval "echo -n \"${1}\" > \${$row}"
+	sleep .1
+done
+}
+
+# $1 : string to vertically display downwards from row 0 to row 7
+animate_vertical_scrolldown()
+{
+[[ $# -eq 0 ]] && return
+local i row
+for i in $(seq 0 7)
+do
+	row="ROW${i}"
+	#echo -n "row $i" > ${row}
+	eval "echo -n \"${1}\" > \${$row}"
+	sleep .3
+	eval "echo '' > \${$row}"
+done
 }
 
 
@@ -27,30 +103,17 @@ lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
      lkm ${KDRV}
   fi
 }
+sudo chmod 0222 ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
 
-sudo chmod 0222 ${ROW0} ${ROW1} ${ROW7} ${ROW3TO6_LARGE} || exit 1
+clrscr
+#eip
+
+fill_all_rows_smallfont "0123456789 2345678"
+#fill_all_rows_smallfont "ABCDEFGHIJKLMNOPQR"
+#animate_vertical_scrolldown "0123456789 2345678"
 
 clrscr
 
-#echo 'degrees Celsius' > ${ROW1}
-echo 'Env Info Prj' > ${ROW7}
-
-#echo -n "99.9C" > ${ROW3TO6_LARGE}
-#echo -n "24.8C" > ${ROW3TO6_LARGE}
-
-#echo 'HUMIDITY' > ${ROW0}
-#echo -n "74.8%" > ${ROW3TO6_LARGE}
-#exit 0
-
-
-for i in $(seq 0 9) ; do
-	#echo -n "7.${i}H" > ${ROW3TO6_LARGE}
-	echo 'TEMPERATURE' > ${ROW0}
-	echo -n "28.${i}C" > ${ROW3TO6_LARGE}
-	sleep 2
-	echo 'HUMIDITY %' > ${ROW0}
-	echo -n "88.${i}%" > ${ROW3TO6_LARGE}
-	sleep 2
-done
-
 dmesg
+
+exit 0
