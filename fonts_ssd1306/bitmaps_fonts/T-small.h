@@ -1,0 +1,4 @@
+#define T-small_width 8
+#define T-small_height 8
+static unsigned char T-small_bits[] = {
+   0x00, 0x01, 0x01, 0x01, 0xff, 0x01, 0x01, 0x01};

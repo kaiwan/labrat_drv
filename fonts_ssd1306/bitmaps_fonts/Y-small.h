@@ -1,0 +1,4 @@
+#define Y-small_width 8
+#define Y-small_height 8
+static unsigned char Y-small_bits[] = {
+   0x02, 0x04, 0x08, 0xf0, 0xf0, 0x08, 0x04, 0x02};

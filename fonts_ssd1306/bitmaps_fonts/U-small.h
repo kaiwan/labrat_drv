@@ -1,0 +1,4 @@
+#define U-small_width 8
+#define U-small_height 8
+static unsigned char U-small_bits[] = {
+   0x00, 0x3f, 0x40, 0x80, 0x80, 0x80, 0x40, 0x3f};

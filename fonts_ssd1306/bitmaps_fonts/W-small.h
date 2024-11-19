@@ -1,0 +1,4 @@
+#define W-small_width 8
+#define W-small_height 8
+static unsigned char W-small_bits[] = {
+   0x00, 0x7f, 0x40, 0x40, 0x38, 0x40, 0x40, 0x7f};

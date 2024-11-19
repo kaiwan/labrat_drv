@@ -1,0 +1,4 @@
+#define Z-small_width 8
+#define Z-small_height 8
+static unsigned char Z-small_bits[] = {
+   0x81, 0xc1, 0xa1, 0x91, 0x89, 0x85, 0x83, 0x81};

@@ -1,0 +1,4 @@
+#define H-small_width 8
+#define H-small_height 8
+static unsigned char H-small_bits[] = {
+   0x00, 0xff, 0x18, 0x18, 0x18, 0x18, 0xff, 0x00};

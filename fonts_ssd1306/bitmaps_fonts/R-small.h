@@ -1,0 +1,4 @@
+#define R-small_width 8
+#define R-small_height 8
+static unsigned char R-small_bits[] = {
+   0x00, 0xff, 0x11, 0x11, 0x31, 0x6e, 0xc0, 0x80};

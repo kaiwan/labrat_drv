@@ -1,0 +1,4 @@
+#define G-small_width 8
+#define G-small_height 8
+static unsigned char G-small_bits[] = {
+   0x00, 0x7e, 0x42, 0x81, 0x91, 0x91, 0xf2, 0x00};

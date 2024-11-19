@@ -1,0 +1,4 @@
+#define M-small_width 8
+#define M-small_height 8
+static unsigned char M-small_bits[] = {
+   0x00, 0xff, 0x04, 0x08, 0x04, 0x02, 0xff, 0x00};

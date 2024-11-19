@@ -1,0 +1,4 @@
+#define D-small_width 8
+#define D-small_height 8
+static unsigned char D-small_bits[] = {
+   0x00, 0xff, 0x81, 0x81, 0x81, 0x42, 0x3c, 0x00};

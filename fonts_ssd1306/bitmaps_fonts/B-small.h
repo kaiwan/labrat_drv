@@ -1,0 +1,4 @@
+#define B-small.h_width 8
+#define B-small.h_height 8
+static unsigned char B-small.h_bits[] = {
+   0x00, 0xff, 0x99, 0x99, 0x5a, 0x3c, 0x00, 0x00};
