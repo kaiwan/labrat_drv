@@ -9,7 +9,10 @@ intv_sec=1
 
 detect_board()
 {
-  MODEL=$(cat /sys/firmware/devicetree/base/model 2>/dev/null)
+  MODEL=$(cat /sys/firmware/devicetree/base/model 2>/dev/null) || true
+  [[ -z "${MODEL}" ]] && {
+    echo "Platform not supported; this driver is only currently supported on the Raspberry Pi and TI BBB" ; exit 1
+  }
   set +e
   [[ "${MODEL}" = "TI AM335x BeagleBone Black" ]] && return 1 || true # it's a TI BBB!
   echo "${MODEL}" |grep "Raspberry Pi" >/dev/null && return 2 || true
