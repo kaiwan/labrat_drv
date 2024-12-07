@@ -291,9 +291,15 @@ static ssize_t dht2x_temp_show(struct device *dev, struct device_attribute *attr
  */
 static DEVICE_ATTR_RO(dht2x_temp);	/* it's show callback is above.. */
 
-/* The probe method of our driver */
+/* The probe method of our driver
+ * Commit 03c835f : i2c: Switch .probe() to not take an id parameter
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+static int dht2x_probe(struct i2c_client *client) 	// named as 'client' or 'dev'
+#else
 static int dht2x_probe(struct i2c_client *client,	// named as 'client' or 'dev'
 		       const struct i2c_device_id *id)
+#endif
 {
 	int stat;
 	/*
