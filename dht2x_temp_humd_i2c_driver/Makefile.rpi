@@ -127,7 +127,8 @@ sa sa_cppcheck sa_gcc sa_flawfinder sa_sparse
 # Set VERBOSE to 1 to run make in verbose mode (make V=1 ...)
 VERBOSE = 0
 
-all:
+all: kmod dt
+kmod:
 	@echo
 	@echo '--- Building : KDIR=${KDIR} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} ccflags-y=${ccflags-y} ---'
 	@${CC} --version|head -n1
@@ -157,6 +158,16 @@ clean:
 	make V=$(VERBOSE) -C $(KDIR) M=$(PWD) clean
 # from 'indent'
 	rm -f *~
+
+dt:
+ifeq (,$(shell which dtc))
+	$(error ERROR: install the DTC compiler first)
+endif
+	@echo "++++++++++++ For the Raspberry Pi family boards ONLY +++++++++++++++++"
+	@echo "--- compile the Device Tree Blob Overlay from the DTO and dynamically 'install' it ---"
+	dtc -@ -I dts -O dtb -o rpi_dts/rpi_i2c1_dht2x.dtbo rpi_dts/rpi_i2c1_dht2x.dto
+	sudo dtoverlay rpi_dts/rpi_i2c1_dht2x.dtbo
+	sudo dtoverlay -l
 
 # Any usermode programs to build? Insert the build target(s) here
 
