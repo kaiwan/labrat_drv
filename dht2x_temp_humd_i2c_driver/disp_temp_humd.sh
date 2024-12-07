@@ -61,9 +61,12 @@ set -e
 
 FAIL_MSG="
 Please ensure that:
-a) The DHT2x sensor is correctly connected to the device
-b) Are all the wires making contact properly?
-c) If the DTB[O] has been modified, pl reboot and retry"
+a) The current DTB (Device Tree Blob) being used includes the DHT2x sensor chip
+   definition, OR
+   The appropriate DT Overlay (.dtbo) is loaded into memory
+b) The DHT2x sensor is correctly connected to the board
+c) Are all the wires making contact properly?
+d) If the DTB[O] has been modified, pl reboot and retry"
 humd_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_humd
 temp_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_temp
 [[ ! -f ${humd_file} ]] && {
