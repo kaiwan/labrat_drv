@@ -631,8 +631,12 @@ static int ssd1306_remove(struct i2c_client *client)
 }
 
 /* The probe method of our driver */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+static int ssd1306_probe(struct i2c_client *client)	// named as 'client' or 'dev'
+#else
 static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev'
 			 const struct i2c_device_id *id)
+#endif
 {
 	int ret = 0;
 
