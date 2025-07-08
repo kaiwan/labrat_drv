@@ -20,7 +20,8 @@
 #    [This particular implementation's geared towards rendering a Temperature and
 #     Humidity values in Celsius (C) or as a percentage (%) resp]
 #----------------------------------------------------------------------
-SYSFS_DIR=/sys/bus/i2c/devices/1-003c
+SLAVE_ADDR=003c
+SYSFS_DIR=/sys/bus/i2c/devices/1-${SLAVE_ADDR}
 ROW0=${SYSFS_DIR}/write_smallfont_to_row0
 ROW1=${SYSFS_DIR}/write_smallfont_to_row1
 ROW2=${SYSFS_DIR}/write_smallfont_to_row2
@@ -103,15 +104,17 @@ lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
      lkm ${KDRV}
   fi
 }
-sudo chmod 0222 ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
+sudo chmod a+w ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
 
 clrscr
-#eip
+eip
+clrscr
 
 fill_all_rows_smallfont "0123456789 2345678"
-#fill_all_rows_smallfont "ABCDEFGHIJKLMNOPQR"
-#animate_vertical_scrolldown "0123456789 2345678"
-
+clrscr
+fill_all_rows_smallfont "ABCDEFGHIJKLMNOPQR"
+clrscr
+animate_vertical_scrolldown "0123456789 2345678"
 clrscr
 
 dmesg
