@@ -382,7 +382,17 @@ static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_
 			break;
 		case '.':
 			PERIOD(X, ROW_FOR_PERIOD);
-			X += x_offset[(int)buf[i]-48];
+			/*
+			 * Both KASAN & UBSAN detect a bug here!!
+			 * X += x_offset[(int)buf[i]-48];
+			 * ...
+			 * UBSAN: array-index-out-of-bounds in /.../fonts_ssd1306/ssd1306.c:385:17
+			 * index -2 is out of range for type 'int [10]'
+			 * ...
+			 * Root cause analysis:
+			 * buf[i] is '.' (period char), ASCII value 46;
+			 * so buf[i]-48 = 46-48 = -2 ! INVALID!
+			 */
 			X += 12;
 			break;
 		case 'C':
