@@ -14,7 +14,9 @@ Colo(u)rs:
   * Rows 2 to 7 render in blue color
 
 ***New! See the demo video!***
+
 ssd1306_oled_drvdemo_video_2025-07-08.mp4
+
 
 You can render the display in two fonts:
 
