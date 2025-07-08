@@ -167,7 +167,7 @@ endif
 	@echo "--- compile the Device Tree Blob Overlay from the DTO and dynamically 'install' it ---"
 	dtc -@ -I dts -O dtb -o rpi_dts/rpi_i2c1_dht2x.dtbo rpi_dts/rpi_i2c1_dht2x.dto
 	# first rm any stale instance of the DTBO if it exists
-	sudo dtoverlay -r rpi_i2c1_dht2x
+#	sudo dtoverlay -r rpi_i2c1_dht2x
 	sudo dtoverlay rpi_dts/rpi_i2c1_dht2x.dtbo
 	sudo dtoverlay -l
 
