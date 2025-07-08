@@ -1,8 +1,8 @@
 #!/bin/bash
 # To be invoked from parent folder via the Makefile.bbb
-DTS=bbb_dts/bbb_i2c2_dht2x.dts
+DTS=bbb_dts/bbb_i2c2_dht2x.dto
 DTBO=bbb_dts/BBB-I2C2-DHT2X.dtbo
-UBOOT_LOC=/boot/dtbs/5.10.168-ti-r71/overlays
+UBOOT_LOC=/boot/dtbs/$(uname -r)/overlays
 
 dtc -I dts -O dtb -@ ${DTS} -o ${DTBO} || {
   echo "FAILED to generate the DTBO" ; exit 1
@@ -12,7 +12,7 @@ sudo cp ${DTBO} ${UBOOT_LOC}/
 ls -l ${UBOOT_LOC}/$(basename ${DTBO})
 
 echo "Verifying it's in the /boot/uEnv.txt..."
-grep "^dtb_overlay.*=${UBOOT_LOC}/${DTBO}" /boot/uEnv.txt || {
+grep "^dtb_overlay.*=${UBOOT_LOC}/$(basename ${DTBO})" /boot/uEnv.txt || {
   echo "
 FAILED to verify presence of our DTBO; please add this line to /boot/uEnv.txt and then retry:
 dtb_overlay=${UBOOT_LOC}/$(basename ${DTBO})

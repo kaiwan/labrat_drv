@@ -16,8 +16,10 @@ FYI, defaults on the BBB are:
 }
 
 #--- 'main'
-[ $(id -u) -ne 0 ] && {
-	echo "needs root."
+#groups |grep -w gpio >/dev/null || {
+[[ $(id -u) -ne 0 ]] && {
+	echo "need to run this as root"
+#	echo "you - $(whoami) - don't belong to group 'gpio' and thus need to run this as root"
 	exit 1
 }
 [ $# -ne 1 ] && {
@@ -36,6 +38,6 @@ LEDNUM=$1
 echo timer > /sys/devices/platform/leds/leds/beaglebone\:green\:usr${LEDNUM}/trigger
 
 # Blink it by toggling it between on (for 100ms) and then off (for 500ms)
-echo 100 > /sys/devices/platform/leds/leds/beaglebone\:green\:usr${LEDNUM}/delay_on
-echo 500 > /sys/devices/platform/leds/leds/beaglebone\:green\:usr${LEDNUM}/delay_off
+sudo sh -c "echo -n 100 > /sys/devices/platform/leds/leds/beaglebone\:green\:usr${LEDNUM}/delay_on"
+sudo sh -c "echo -n 500 > /sys/devices/platform/leds/leds/beaglebone\:green\:usr${LEDNUM}/delay_off"
 exit 0

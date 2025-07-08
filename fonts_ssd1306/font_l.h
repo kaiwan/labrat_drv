@@ -8,7 +8,7 @@
 
 /* Use the XWin 'bitmap' app to render the characters.
  * Keep last col zero to, in effect, have some spacing before the next char
- * The 'original' bitmap files are in font_bitmaps/
+ * The 'original' bitmap files are in the bitmaps_fonts/ dir.
  * NOTE:
  * The bitmap needs to be rotated anti-clockwise 90 degrees to correctly
  * appear on the OLED when in landscape mode!
@@ -67,8 +67,8 @@ static unsigned char percent_bits[] = {
 /* See SSD1306 Solomon Systech datasheet Rev 1.1 pg 31 1st table 1st row */
 // Our addr mode is Horizontal
 
-#define CMD_SET_PAGE_ROW_0TO7	0x22
-#define CMD_SET_COL_0TO127	0x21
+#define CMD_SET_PAGE_ROW_0TO7	0x22  // datasheet pg 31, CMD 22h, step 3 'Addressing Setting Command Table'
+#define CMD_SET_COL_0TO127	0x21  // datasheet pg 30, CMD 22h, step 3   -ditto-
 #define MAX_ROW_PAGE	  7
 #define MAX_COL		127
 
@@ -362,7 +362,6 @@ static u8 render_smallfont[91][8] = {
 	{0x0}, {0x0}, {0x0}, {0x0},			// idx 31
 	//----- ASCII 32 is ' ' whitespace
 	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},		// ' ' ; idx 32
-	// element #s 33 to 47 follow... they're currently ignored
 	// element #s 33 to 36 follow... they're currently ignored
 	{0x0}, {0x0}, {0x0}, {0x0},
 	//----- ASCII 37 is '%'
@@ -383,9 +382,9 @@ static u8 render_smallfont[91][8] = {
 	{0x00, 0x01, 0x01, 0x01, 0x01, 0x7f, 0x00},	// 7 ; idx 55
 	{0x00, 0x7f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 8
 	{0x00, 0x4f, 0x49, 0x49, 0x49, 0x7f, 0x00},	// 9
-	/*------ASCII 58 is : -------------------------------
+	/*------ASCII 58 is ':' (the colon char) -----------------------
 	 * We're currently ignoring ASCII 58 to 64 inclusive... that's 7 chars */
-	// element #s 10 to 16 follow... they're currently ignored
+	// element #s 58 to 64 follow... they're currently ignored
 	{0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0}, {0x0},
 	// element #s 17 to __ follow... they're the capital letters A to Z
 	{0xc0, 0x38, 0x16, 0x11, 0x11, 0x16, 0x38, 0xc0}, // A ; idx 65
@@ -426,8 +425,8 @@ static u8 render_smallfont[91][8] = {
  * when drawing small font text..
  */
 #define START_POS_SMALL_LETTERS(X, Y) do { \
-		SET_START_END_COLS((X), MAX_COL); \
-		SET_START_END_PAGES((Y), 0); \
+	SET_START_END_COLS((X), MAX_COL); \
+	SET_START_END_PAGES((Y), 0); \
 } while (0)
 /*	if ((Y)>=0 && ((Y)<=2 || (Y) == MAX_ROW_PAGE) && \
 		((X)>=0) && ((X)<=MAX_COL-8)) { \
@@ -443,7 +442,6 @@ static u8 render_smallfont[91][8] = {
 
 #define LETTER_A_SMALLFONT RENDER_SMALLFONT(0xa)
 #define LETTER_C_SMALLFONT RENDER_SMALLFONT(0xc)
-
 
 #define PERCENT_SMALLFONT(X, Y) do { \
 	int i; \
