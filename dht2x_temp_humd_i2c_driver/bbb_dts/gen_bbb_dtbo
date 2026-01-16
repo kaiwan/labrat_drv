@@ -1,6 +1,6 @@
 #!/bin/bash
 # To be invoked from parent folder via the Makefile.bbb
-DTS=bbb_dts/bbb_i2c2_dht2x.dto
+DTS=bbb_dts/bbb_i2c2_dht2x.dtso
 DTBO=bbb_dts/BBB-I2C2-DHT2X.dtbo
 UBOOT_LOC=/boot/dtbs/$(uname -r)/overlays
 
