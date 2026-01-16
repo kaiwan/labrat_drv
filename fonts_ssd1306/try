@@ -106,8 +106,8 @@ lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
 }
 sudo chmod a+w ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
 
-clrscr
-eip
+#clrscr
+#eip
 clrscr
 
 fill_all_rows_smallfont "0123456789 2345678"
