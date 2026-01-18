@@ -20,8 +20,10 @@
 #    [This particular implementation's geared towards rendering a Temperature and
 #     Humidity values in Celsius (C) or as a percentage (%) resp]
 #----------------------------------------------------------------------
+I2C_BUS=1  # for R Pi
+I2C_BUS=3  # for Ti BeaglePlay (on MikroBus connector)
 SLAVE_ADDR=003c
-SYSFS_DIR=/sys/bus/i2c/devices/1-${SLAVE_ADDR}
+SYSFS_DIR=/sys/bus/i2c/devices/${I2C_BUS}-${SLAVE_ADDR}
 ROW0=${SYSFS_DIR}/write_smallfont_to_row0
 ROW1=${SYSFS_DIR}/write_smallfont_to_row1
 ROW2=${SYSFS_DIR}/write_smallfont_to_row2
@@ -106,17 +108,23 @@ lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
 }
 sudo chmod a+w ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
 
-#clrscr
-#eip
-clrscr
+trap 'echo "Ok quitting" ; clrscr ; exit 0' INT QUIT EXIT
+echo "--- NOTE ---
+ Using I2C Bus # ${I2C_BUS} and slave addr ${SLAVE_ADDR}
+Change as required.
+^C to quit
+"
 
+clrscr
 fill_all_rows_smallfont "0123456789 2345678"
 clrscr
 fill_all_rows_smallfont "ABCDEFGHIJKLMNOPQR"
 clrscr
+fill_all_rows_smallfont "STUVWXYZ 012345678"
+clrscr
 animate_vertical_scrolldown "0123456789 2345678"
 clrscr
+eip
 
-dmesg
-
+dmesg |tail -n20
 exit 0
