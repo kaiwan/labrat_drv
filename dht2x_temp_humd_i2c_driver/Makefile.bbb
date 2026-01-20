@@ -154,7 +154,7 @@ ifeq (,$(shell which dtc))
 endif
 	@echo "++++++++++++ For the TI Beagle Bone Black (BBB) board ONLY +++++++++++++++++"
 	@echo "--- compile the Device Tree Blob (DTB) Overlay from the DTS and cp to /boot/.../overlays ---"
-	bbb_dts/gen_bbb_dtbo
+	bbb_dts/gen_bbb_dtb_overlay
 #	dtc -@ -I dts -O dtb -o bbb_dts/BBB-DHT2X.dtbo bbb_dts/bbb_dht2x.dts
 #	sudo cp bbb_dts/BBB-DHT2X.dtbo /boot/dtbs/$(shell uname -r)/overlays
 #	@echo "Add the following line to /boot/uEnv.txt (if not already there):"

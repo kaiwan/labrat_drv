@@ -13,6 +13,11 @@ Colo(u)rs:
   * Row 0 and row 1 renders in yellow color
   * Rows 2 to 7 render in blue color
 
+***New! See the demo video!***
+
+ssd1306_oled_drvdemo_video_2025-07-08.mp4
+
+
 You can render the display in two fonts:
 
  1. The 'default' small 8x8 bit font:  
