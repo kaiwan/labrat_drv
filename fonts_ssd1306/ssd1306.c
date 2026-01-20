@@ -34,8 +34,14 @@ MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan N Billimoria");
 MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver (with custom font)");
 MODULE_LICENSE("GPL");
 
-#define I2C_BUS_SSD1306       1	// I2C Bus available in our Raspberry Pi
-//#define I2C_BUS_SSD1306     3	// I2C Bus on the MikroBUS connector on the TI BeaglePlay
+/* Module parameters */
+static int i2cbus = -1;
+module_param(i2cbus, int, 0600);
+MODULE_PARM_DESC(i2cbus, "I2C bus # to use:\n"
+"Set to 1	For the Raspberry Pi boards     -OR-"
+"	For the TI BeaglePlay connected via a Grove connector\n"
+"Set to 3	For the TI BeaglePlay connected via the MikroBUS connector");
+
 #define SLAVE_DEVICE_NAME   "oled_ssd1306"	// Device and Driver Name
 #define SSD1306_SLAVE_ADDR   0x3C	// SSD1306 OLED Slave Address
 
@@ -811,7 +817,6 @@ static const struct of_device_id ssd1306_of_match[] = {
 	// f.e.:   { .compatible = "nxp,pcf8563" },
 	{}
 };
-
 MODULE_DEVICE_TABLE(of, ssd1306_of_match);
 #endif
 
@@ -839,7 +844,11 @@ static int __init oled_driver_init(void)
 {
 	int ret = -1;
 
-	oled_i2c_adapter = i2c_get_adapter(I2C_BUS_SSD1306);
+	if (i2cbus == -1) {
+		pr_info("need to pass the 'i2cbus' module parameter\n");
+		return -EINVAL;
+	}
+	oled_i2c_adapter = i2c_get_adapter(i2cbus);
 	if (oled_i2c_adapter != NULL) {
 		i2c_client_oled =
 		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
