@@ -5,7 +5,7 @@ name=$(basename $0)
 KDRV=dht2x_kdrv
 i2cbus=1        # on I2C bus #1; update if required
 chip_addr=0038  # chip addr is 0x38; update if required
-intv_sec=1
+intv_sec=2
 
 detect_board()
 {
@@ -18,6 +18,57 @@ detect_board()
   echo "${MODEL}" |grep "Raspberry Pi" >/dev/null && return 2 || true
   echo "${MODEL}" |grep "BeaglePlay" >/dev/null && return 3 || true
   return -1
+}
+
+# display_on_oled()
+# Params:
+#  $1 = temperature value
+#  $2 = humidity value
+display_on_oled()
+{
+local TEMP_FP=$(echo "scale=1; $1 / 1000" | bc)
+local HUMD_FP=$(echo "scale=1; $2 / 1000" | bc)
+
+echo -n "${TEMP_FP}C" > ${OLED_LARGE_ROW_TARGET}
+sleep ${intv_sec}
+echo -n "${HUMD_FP}%" > ${OLED_LARGE_ROW_TARGET}
+}
+
+# TODO :
+#  [ ] soft-code the i2cbus # for the OLED display
+setup_display_on_oled()
+{
+OLED_I2CBUS=3
+OLED_SSD_ADDR=3c  # 0x3c
+SYSFS_OLED_PFX=/sys/bus/i2c/devices/${OLED_I2CBUS}-00${OLED_SSD_ADDR}
+OLED_LARGE_ROW_TARGET=${SYSFS_OLED_PFX}/write_largefont_rows2to6
+
+[[ ! -f ${OLED_LARGE_ROW_TARGET} ]] && {
+  echo "Couldn't get path to the OLED display's 'large' rows, aborting.."
+  exit 1
+} || true
+ROW0=${SYSFS_OLED_PFX}/write_smallfont_to_row0
+ROW1=${SYSFS_OLED_PFX}/write_smallfont_to_row1
+ROW2=${SYSFS_OLED_PFX}/write_smallfont_to_row2
+ROW3=${SYSFS_OLED_PFX}/write_smallfont_to_row3
+ROW4=${SYSFS_OLED_PFX}/write_smallfont_to_row4
+ROW5=${SYSFS_OLED_PFX}/write_smallfont_to_row5
+ROW6=${SYSFS_OLED_PFX}/write_smallfont_to_row6
+ROW7=${SYSFS_OLED_PFX}/write_smallfont_to_row7
+oled_clrscr
+echo 'Env Info Prj' > ${ROW0}
+}
+
+oled_clrscr()
+{
+local i row
+for i in $(seq 0 7)
+do
+#eval "echo \${$myvar}"
+        row=ROW${i}
+        # place one variable within another! ref: https://unix.stackexchange.com/a/41409/55746
+        eval "echo '' > \${$row}"
+done
 }
 
 
@@ -45,6 +96,8 @@ else
    exit 1
 fi
 set -e
+
+DISPLAY_ON_OLED=1
 
 # ${VARNAME:-DEFAULT_VALUE} evals to DEFAULT_VALUE if VARNAME undefined
 p1=${1:-}
@@ -87,11 +140,14 @@ temp_file=/sys/bus/i2c/devices/${i2cbus}-${chip_addr}/dht2x_temp
   echo "${FAIL_MSG}"; exit 1
 }
 
+# Display Loop!
+[[ ${DISPLAY_ON_OLED} -eq 1 ]] && setup_display_on_oled
 echo "temperature(milliC),rel_humidity(milli%)"
 while [ true ]
 do
    temp=$(cat ${temp_file})
    humd=$(cat ${humd_file})
    echo "${temp},${humd}"
+   [[ ${DISPLAY_ON_OLED} -eq 1 ]] && display_on_oled ${temp} ${humd}
    sleep ${intv_sec}
 done
