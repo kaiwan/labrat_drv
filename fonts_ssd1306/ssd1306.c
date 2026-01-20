@@ -476,146 +476,32 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 	}
 }
 
-
 /*
- * Write the user-supplied string to row 7 of the OLED (landscape orientation assumed)
- * ASSUME that 'buf' contains an ASCIIZ string (NUL-terminated)
+ * Write the user-supplied string @buf (for @count bytes) to row @row of the
+ * OLED (landscape orientation assumed).
+ * We ASSUME that @buf contains an ASCIIZ string (NUL-terminated)
  */
-static ssize_t write_smallfont_to_row7_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	//char *kbuf;
+#define WRITE_TO_ROW_FUNC(row)                                                 \
+static ssize_t write_smallfont_to_row##row##_store(struct device *dev,         \
+                        struct device_attribute *attr,                         \
+                        const char *buf, size_t count)                         \
+{                                                                              \
+	if (mutex_lock_interruptible(&mtx))                                    \
+		return -EINTR;                                                 \
+	write_string_smallfont(buf, setup_str_to_display(buf, count), row);    \
+	mutex_unlock(&mtx);                                                    \
+	return count;                                                          \
+}                                                                              \
+static DEVICE_ATTR_WO(write_smallfont_to_row##row)
 
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-
-#if 0
-	kbuf = kzalloc(count, GFP_KERNEL);
-	if (unlikely(!kbuf)) {
-		mutex_unlock(&mtx);
-		return -ENOMEM;
-	}
-	if (copy_from_user(kbuf, buf, count)) {
-		kfree(kbuf);
-		mutex_unlock(&mtx);
-		return -EIO;
-	}
-	// Get rid of the newline if any
-	len = strlen(kbuf);
-	//print_hex_dump_bytes("kbuf", DUMP_PREFIX_OFFSET, kbuf, len);
-	if (kbuf[len-1] == 0x0a) {
-		kbuf[len-1] = '\0';
-		len--;
-	}
-#endif
-
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 7);
-
-//	kfree(kbuf);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row7);
-/*
- * Write the user-supplied string to row 6 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row6_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 6);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row6);
-/*
- * Write the user-supplied string to row 5 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row5_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 5);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row5);
-/*
- * Write the user-supplied string to row 4 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row4_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 4);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row4);
-/*
- * Write the user-supplied string to row 3 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row3_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 3);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row3);
-/*
- * Write the user-supplied string to row 2 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row2_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 2);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row2);
-/*
- * Write the user-supplied string to row 1 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row1_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 1);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row1);
-
-/*
- * Write the user-supplied string to row 0 of the OLED (landscape orientation assumed)
- */
-static ssize_t write_smallfont_to_row0_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	if (mutex_lock_interruptible(&mtx))
-		return -EINTR;
-	write_string_smallfont(buf, setup_str_to_display(buf, count), 0);
-	mutex_unlock(&mtx);
-
-	return count;
-}
-static DEVICE_ATTR_WO(write_smallfont_to_row0);
+WRITE_TO_ROW_FUNC(0);
+WRITE_TO_ROW_FUNC(1);
+WRITE_TO_ROW_FUNC(2);
+WRITE_TO_ROW_FUNC(3);
+WRITE_TO_ROW_FUNC(4);
+WRITE_TO_ROW_FUNC(5);
+WRITE_TO_ROW_FUNC(6);
+WRITE_TO_ROW_FUNC(7);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 static void ssd1306_remove(struct i2c_client *client)
