@@ -168,6 +168,7 @@ static long dht2x_read_sensors(struct device *dev)
 		GET_SHOW_STATUS(client, stat);
 		dev_dbg(dev, "waiting...(stat=0x%x)\n", stat);
 		mdelay(100);
+		// TODO - break out if it takes too long?
 	} while ((IS_BIT_SET(stat, 7) != 0));
 
 	err = dht2x_read_block_data(client, DHT2X_CMD_REG, len, gdata->buf);
