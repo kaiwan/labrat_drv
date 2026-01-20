@@ -23,6 +23,9 @@
 # As well, the DEBUG_MODE variable (see it below) can be set to 'y' or 'n' (no being
 # the default)
 FNAME_C := dht2x_kdrv
+FNAME_DTS := bbb_dts/bgp_i2c_dht2x.dtso
+FNAME_DTBO := BGP_I2C_DHT2X.dtbo
+
 ifeq ($(FNAME_C),)
   $(error You MUST pass the C file like this:\
 make FNAME_C=csrc-filename-without-.c target-name)
@@ -166,6 +169,11 @@ endif
 	@echo "++++++++++++ For the Raspberry Pi family boards ONLY +++++++++++++++++"
 	@echo "--- compile the Device Tree Blob Overlay from the DTO and dynamically 'install' it ---"
 	dtc -@ -I dts -O dtb -o rpi_dts/rpi_i2c1_dht2x.dtbo rpi_dts/rpi_i2c1_dht2x.dto
+	#dtc -@ -I dts -O dtb -o ${FNAME_DTBO} ${FNAME_DTS}
+	# sudo fdtoverlay -i <existing-input-board-DTB> -o <output-DTB> <overlay-DTBO>
+	#sudo fdtoverlay -i /boot/dtbs/5.10.153-ti-arm64-r86/ti/k3-am625-beagleplay.dtb \
+		-o /boot/dtbs/5.10.153-ti-arm64-r86/ti/k3-am625-beagleplay.dtb \
+		${FNAME_DTBO}
 	# first rm any stale instance of the DTBO if it exists
 #	sudo dtoverlay -r rpi_i2c1_dht2x
 	sudo dtoverlay rpi_dts/rpi_i2c1_dht2x.dtbo
