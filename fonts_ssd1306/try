@@ -1,5 +1,6 @@
 #!/bin/bash
 # SSD1306 OLED display tester/demo script
+# (Works for the SSD1315 0.96 OLED too)
 #----------------------------------------------------------------------
 # Dimensions in landscape orientation (which we always assume its in):
 #  18x8 (cols x rows)
@@ -20,17 +21,6 @@
 #    [This particular implementation's geared towards rendering a Temperature and
 #     Humidity values in Celsius (C) or as a percentage (%) resp]
 #----------------------------------------------------------------------
-SLAVE_ADDR=003c
-SYSFS_DIR=/sys/bus/i2c/devices/1-${SLAVE_ADDR}
-ROW0=${SYSFS_DIR}/write_smallfont_to_row0
-ROW1=${SYSFS_DIR}/write_smallfont_to_row1
-ROW2=${SYSFS_DIR}/write_smallfont_to_row2
-ROW3=${SYSFS_DIR}/write_smallfont_to_row3
-ROW4=${SYSFS_DIR}/write_smallfont_to_row4
-ROW5=${SYSFS_DIR}/write_smallfont_to_row5
-ROW6=${SYSFS_DIR}/write_smallfont_to_row6
-ROW7=${SYSFS_DIR}/write_smallfont_to_row7
-ROWS2TO6_LARGE=${SYSFS_DIR}/write_largefont_rows2to6
 
 clrscr()
 {
@@ -104,19 +94,51 @@ lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
      lkm ${KDRV}
   fi
 }
+
+trap 'echo "Ok quitting" ; clrscr ; exit 0' INT QUIT #EXIT
+
+[[ $# -ne 1 ]] && {
+  echo "Usage: ${name} I2C-bus#
+Set to:
+1	For the Raspberry Pi boards
+        -OR-
+	For the TI BeaglePlay connected via a Grove connector
+
+3	For the TI BeaglePlay connected via the MikroBUS connector
+"
+  exit 1
+}
+I2C_BUS=$1
+SLAVE_ADDR=003c
+SYSFS_DIR=/sys/bus/i2c/devices/${I2C_BUS}-${SLAVE_ADDR}
+ROW0=${SYSFS_DIR}/write_smallfont_to_row0
+ROW1=${SYSFS_DIR}/write_smallfont_to_row1
+ROW2=${SYSFS_DIR}/write_smallfont_to_row2
+ROW3=${SYSFS_DIR}/write_smallfont_to_row3
+ROW4=${SYSFS_DIR}/write_smallfont_to_row4
+ROW5=${SYSFS_DIR}/write_smallfont_to_row5
+ROW6=${SYSFS_DIR}/write_smallfont_to_row6
+ROW7=${SYSFS_DIR}/write_smallfont_to_row7
+ROWS2TO6_LARGE=${SYSFS_DIR}/write_largefont_rows2to6
+
+echo "--- NOTE ---
+ Using I2C Bus # ${I2C_BUS} and slave addr ${SLAVE_ADDR}
+Change as required.
+^C to quit
+"
+
 sudo chmod a+w ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${ROWS2TO6_LARGE} || exit 1
 
 clrscr
-eip
-clrscr
-
 fill_all_rows_smallfont "0123456789 2345678"
 clrscr
 fill_all_rows_smallfont "ABCDEFGHIJKLMNOPQR"
 clrscr
+fill_all_rows_smallfont "STUVWXYZ 012345678"
+clrscr
 animate_vertical_scrolldown "0123456789 2345678"
 clrscr
+eip
 
-dmesg
-
+dmesg |tail -n20
 exit 0

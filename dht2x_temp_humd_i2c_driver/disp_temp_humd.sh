@@ -32,7 +32,7 @@ elif [[ ${ret} -eq 2 ]] ; then
    ln -sf Makefile.rpi Makefile  # setup the Makefile slink to point to the correct Makefile
    echo "+++ Detected we're running on the ${MODEL}"
 else
-   echo "!!! Unknown board, aborting"
+   echo "!!! Unknown board, aborting [this driver is only currently supported on the Raspberry Pi and TI BBB]"
    exit 1
 fi
 set -e

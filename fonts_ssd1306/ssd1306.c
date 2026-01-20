@@ -35,6 +35,7 @@ MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver (with custom font)");
 MODULE_LICENSE("GPL");
 
 #define I2C_BUS_SSD1306       1	// I2C Bus available in our Raspberry Pi
+//#define I2C_BUS_SSD1306     3	// I2C Bus on the MikroBUS connector on the TI BeaglePlay
 #define SLAVE_DEVICE_NAME   "oled_ssd1306"	// Device and Driver Name
 #define SSD1306_SLAVE_ADDR   0x3C	// SSD1306 OLED Slave Address
 
@@ -668,6 +669,7 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	 */
 	SSD1306_DisplayInit();
 	SSD1306_Fill(0x00);	// fill the OLED with this data
+	SSD1306_Fill(0xAB);	// fill the OLED with this data
 
 	/* Create the sysfs pseudofiles, one for each display row we can write to
 	 * (so a total of 8 as there are 8 rows)
