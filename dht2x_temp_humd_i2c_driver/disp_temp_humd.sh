@@ -11,11 +11,13 @@ detect_board()
 {
   MODEL=$(cat /sys/firmware/devicetree/base/model 2>/dev/null) || true
   [[ -z "${MODEL}" ]] && {
-    echo "Platform not supported; this driver is only currently supported on the Raspberry Pi and TI BBB" ; exit 1
+    echo "Platform not supported; this driver is only currently supported on the Raspberry Pi, TI BBB and BeaglePlay" ; exit 1
   }
   set +e
   [[ "${MODEL}" = "TI AM335x BeagleBone Black" ]] && return 1 || true # it's a TI BBB!
   echo "${MODEL}" |grep "Raspberry Pi" >/dev/null && return 2 || true
+  echo "${MODEL}" |grep "BeaglePlay" >/dev/null && return 3 || true
+  return -1
 }
 
 
@@ -23,6 +25,11 @@ detect_board()
 
 detect_board
 ret=$?
+if [[ ${ret} -eq -1 ]] ; then
+   echo "!!! Unknown board, aborting [this driver is only currently supported on the Raspberry Pi and TI BBB]"
+   exit 1
+fi
+
 if [[ ${ret} -eq 1 ]] ; then
    i2cbus=2 # on the TI BBB, the DTS specifies the I2C bus #2 as having the chip
    ln -sf Makefile.bbb Makefile  # setup the Makefile slink to point to the correct Makefile
@@ -31,6 +38,8 @@ elif [[ ${ret} -eq 2 ]] ; then
    i2cbus=1 # on the R Pi, the DTS specifies the I2C bus #1 as having the chip
    ln -sf Makefile.rpi Makefile  # setup the Makefile slink to point to the correct Makefile
    echo "+++ Detected we're running on the ${MODEL}"
+elif [[ ${ret} -eq 3 ]] ; then
+   i2cbus=1 # on the BeaglePlay via Grove, the DTS specifies the I2C bus #1 as having the chip
 else
    echo "!!! Unknown board, aborting [this driver is only currently supported on the Raspberry Pi and TI BBB]"
    exit 1
