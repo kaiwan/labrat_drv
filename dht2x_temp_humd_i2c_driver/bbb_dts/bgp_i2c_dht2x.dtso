@@ -8,9 +8,10 @@
 /plugin/;
 
 &main_i2c1 {
+//&main_i2c3 { // Grove connector, bus is #3 ; no!
 	status = "okay";
 
-	clock-frequency = <100000>;
+//	clock-frequency = <100000>;
 
 	#address-cells = <1>;
 	#size-cells = <0>;
