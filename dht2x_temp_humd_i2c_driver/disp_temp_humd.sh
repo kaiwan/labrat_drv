@@ -55,6 +55,7 @@ ROW4=${SYSFS_OLED_PFX}/write_smallfont_to_row4
 ROW5=${SYSFS_OLED_PFX}/write_smallfont_to_row5
 ROW6=${SYSFS_OLED_PFX}/write_smallfont_to_row6
 ROW7=${SYSFS_OLED_PFX}/write_smallfont_to_row7
+sudo chmod a+w ${ROW0} ${ROW1} ${ROW2} ${ROW3} ${ROW4} ${ROW5} ${ROW6} ${ROW7} ${OLED_LARGE_ROW_TARGET}
 oled_clrscr
 echo 'Env Info Prj' > ${ROW0}
 }
