@@ -10,14 +10,14 @@
 &main_i2c1 {
 	status = "okay";
 
-        clock-frequency = <100000>;
+	clock-frequency = <100000>;
 
-        #address-cells = <1>;
-        #size-cells = <0>;
+	#address-cells = <1>;
+	#size-cells = <0>;
 
 	dht22@38 {
-                   compatible = "asair,dht2x_kdrv";
-                   reg = <0x38>;
-                   status = "okay";
-        };
+		compatible = "asair,dht2x_kdrv";
+		reg = <0x38>;
+		status = "okay";
+	};
 };
