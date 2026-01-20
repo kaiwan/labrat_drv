@@ -2,10 +2,11 @@
  * ssd1306.c
  *
  * Part of the SSD1306 OLED display driver-with-a-few-larger-fonts project
- * Tested on : Raspberry Pi family
+ * (Works for the SSD1315 0.96 OLED too!)
+ * Tested on : Raspberry Pi family, TI BeaglePlay
  *
  * (c) Kaiwan N Billimoria, kaiwanTECH
- * License: MIT
+ * License: GPL
  *
  * TODO-
  *  [+] clear full screen
