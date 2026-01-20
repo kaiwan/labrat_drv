@@ -534,6 +534,13 @@ static int ssd1306_remove(struct i2c_client *client)
 #endif
 }
 
+#define DEVICE_CREATE_SYSFS(row)							\
+	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row##row);	\
+	if (ret < 0) {									\
+		dev_info(dev, "creating sysfs entry write_smallfont_to_row" #row " failed");\
+		goto out_fail##row;							\
+	}
+
 /* The probe method of our driver */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 static int ssd1306_probe(struct i2c_client *client) 	// named as 'client' or 'dev'
@@ -571,47 +578,14 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	 * Temperature / Humidity values to be displayed)
 	 */
 	// rows 0 to 7 : SMALL 8x8 font display
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row0);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row0 failed");
-		goto out_fail0;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row1);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row1 failed");
-		goto out_fail1;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row2);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row2 failed");
-		goto out_fail2;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row3);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row3 failed");
-		goto out_fail3;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row4);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row4 failed");
-		goto out_fail4;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row5);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row5 failed");
-		goto out_fail5;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row6);
-	if (ret < 0) {
-	//if (ret == 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row6 failed");
-		goto out_fail6;
-	}
-	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row7);
-	if (ret < 0) {
-		dev_info(dev, "creating sysfs entry write_smallfont_to_row7 failed");
-		goto out_fail7;
-	}
+	DEVICE_CREATE_SYSFS(0);
+	DEVICE_CREATE_SYSFS(1);
+	DEVICE_CREATE_SYSFS(2);
+	DEVICE_CREATE_SYSFS(3);
+	DEVICE_CREATE_SYSFS(4);
+	DEVICE_CREATE_SYSFS(5);
+	DEVICE_CREATE_SYSFS(6);
+	DEVICE_CREATE_SYSFS(7);
 	// rows 2 to 6 : LARGE font display
 	ret = device_create_file(&client->dev, &dev_attr_write_largefont_rows2to6);
 	if (ret < 0) {
