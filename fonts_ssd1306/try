@@ -82,21 +82,11 @@ done
 
 #--- 'main'
 KDRV=ssd1306
-[[ "$1" = "-b" ]] && {
-  echo "lkm ${KDRV}"
-  lkm ${KDRV}
-}
-
-lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
-  if [[ -f ${KDRV}.ko ]] ; then
-     sudo insmod ./${KDRV}.ko
-  else
-     lkm ${KDRV}
-  fi
-}
-
-trap 'echo "Ok quitting" ; clrscr ; exit 0' INT QUIT #EXIT
-
+#[[ "$1" = "-b" ]] && { # build and insmod
+#  echo "make ${KDRV}"
+#  make
+#  sudo insmod ./${KDRV}.ko || exit 1
+#}
 [[ $# -ne 1 ]] && {
   echo "Usage: ${name} I2C-bus#
 Set to:
@@ -109,6 +99,17 @@ Set to:
   exit 1
 }
 I2C_BUS=$1
+lsmod |grep -w ${KDRV} >/dev/null 2>&1 || {
+  if [[ -f ${KDRV}.ko ]] ; then
+     sudo insmod ./${KDRV}.ko i2cbus=${I2C_BUS} || exit 1
+  else
+     make || exit 1
+     sudo insmod ./${KDRV}.ko i2cbus=${I2C_BUS} || exit 1
+  fi
+}
+
+trap 'echo "Ok quitting" ; clrscr ; exit 0' INT QUIT #EXIT
+
 SLAVE_ADDR=003c
 SYSFS_DIR=/sys/bus/i2c/devices/${I2C_BUS}-${SLAVE_ADDR}
 ROW0=${SYSFS_DIR}/write_smallfont_to_row0
