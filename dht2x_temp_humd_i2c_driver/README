@@ -3,3 +3,4 @@ README - for the DHT2x I2C temp+humd sensor chip driver:
 Working and tested upon:
 - Raspberry Pi family boards (the R Pi 0W and the R Pi 4 Model B)
 - TI Beagle Bone Black (BBB)
+- TI BeaglePlay
