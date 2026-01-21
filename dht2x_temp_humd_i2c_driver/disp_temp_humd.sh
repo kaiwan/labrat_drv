@@ -36,12 +36,35 @@ echo -n "${HUMD_FP}%" > ${OLED_LARGE_ROW_TARGET}
 
 # TODO :
 #  [ ] soft-code the i2cbus # for the OLED display
+# i2cbus:
+#  Set to 1	For the Raspberry Pi boards -OR- For the TI BeaglePlay connected
+#   via a Grove connector
+#  Set to 3	For the TI BeaglePlay connected via the MikroBUS connector (int)
 setup_display_on_oled()
 {
 OLED_I2CBUS=3
 OLED_SSD_ADDR=3c  # 0x3c
 SYSFS_OLED_PFX=/sys/bus/i2c/devices/${OLED_I2CBUS}-00${OLED_SSD_ADDR}
 OLED_LARGE_ROW_TARGET=${SYSFS_OLED_PFX}/write_largefont_rows2to6
+
+(
+# Load driver as reqd
+cd ../fonts_ssd1306/ || exit 1
+local OLEDDRV=ssd1306
+set +e
+
+#lsmod|grep -w "^${OLEDDRV}" >/dev/null 2>&1
+#[ $? -ne 0 ] && {
+  sudo rmmod ${OLEDDRV} 2>/dev/null || true
+  echo "${name}: loading driver ${OLEDDRV} now..."
+  [[ ! -f ${OLEDDRV}.ko ]] && make || true
+  sudo insmod ${OLEDDRV}.ko i2cbus=${OLED_I2CBUS} || {
+	echo "insmod failed!" ;  exit 1
+  } && true
+#}
+set -e
+cd -
+)
 
 [[ ! -f ${OLED_LARGE_ROW_TARGET} ]] && {
   echo "Couldn't get path to the OLED display's 'large' rows, aborting.."
@@ -84,11 +107,11 @@ fi
 
 if [[ ${ret} -eq 1 ]] ; then
    i2cbus=2 # on the TI BBB, the DTS specifies the I2C bus #2 as having the chip
-   ln -sf Makefile.bbb Makefile  # setup the Makefile slink to point to the correct Makefile
+   #ln -sf Makefile.bbb Makefile  # setup the Makefile slink to point to the correct Makefile
    echo "+++ Detected we're running on the ${MODEL}"
 elif [[ ${ret} -eq 2 ]] ; then
    i2cbus=1 # on the R Pi, the DTS specifies the I2C bus #1 as having the chip
-   ln -sf Makefile.rpi Makefile  # setup the Makefile slink to point to the correct Makefile
+   #ln -sf Makefile.rpi Makefile  # setup the Makefile slink to point to the correct Makefile
    echo "+++ Detected we're running on the ${MODEL}"
 elif [[ ${ret} -eq 3 ]] ; then
    i2cbus=1 # on the BeaglePlay via Grove, the DTS specifies the I2C bus #1 as having the chip
