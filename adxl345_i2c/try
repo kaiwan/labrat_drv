@@ -1,8 +1,4 @@
 #!/bin/sh
 
-while [ true ]
-do 
-   cat /sys/bus/i2c/devices/1-0053/adxl_axes
-   sleep .1
-done
-
+watch -n 0.5 cat /sys/bus/i2c/devices/1-0053/adxl_axes
+exit 0
