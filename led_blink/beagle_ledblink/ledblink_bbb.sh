@@ -1,6 +1,7 @@
 #!/bin/bash
 # Blink the BBB's built-in LEDs
-# NOTE: meant for the BeagleBone Black running standard Debian
+# NOTE: meant for the TI BeagleBone Black / BeaglePlay boards
+# running standard Debian
 # ref: https://robotic-controls.com/learn/beaglebone/beaglebone-black-built-leds
 name=$(basename $0)
 
