@@ -1,0 +1,36 @@
+/*
+ * oled_ssd13xx_bgp.dtso
+ * Simple DT Overlay for two OLED SSD13XX displays
+ * connected to the TI BeaglePlay
+ * 1. I2C-1 bus, slave addr 0x3c ; Grove devices are typically on I2C bus 1
+ * 2. I2C-3 bus, slave addr 0x3d ; mikroBUS devices are typically on I2C bus 3
+ *
+ * compatible:
+ * Setting OEM to 'custom' - and not the oiginal OEM 'solomon' - precisely
+ * so that the kernel-default fb_ssd1306 driver doesn't get matched and
+ * loaded.
+ */
+/dts-v1/;
+/plugin/;
+
+&main_i2c1 { // Grove is typically on I2C bus 1
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+    oled0: ssd1306@3c {
+        compatible = "custom,ssd1306";
+        reg = <0x3c>;
+	status = "okay";
+    };
+};
+
+&main_i2c3 { // MikroBUS is typically on I2C bus 3
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+    oled1: ssd1306@3c {
+        compatible = "custom,ssd1306";
+        reg = <0x3c>;
+	status = "okay";
+    };
+};
