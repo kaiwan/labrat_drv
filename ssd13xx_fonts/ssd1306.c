@@ -5,6 +5,18 @@
  * (Works for the SSD1315 0.96 OLED too!)
  * Tested on : Raspberry Pi family, TI BeaglePlay
  *
+ * The really awesome thing: this driver is now multidevice-capable.
+ * We define the DT Overlay with as many OLED compatible devices as we have
+ * and the kernel auto-invokes our probe method N times, where N is the number
+ * of OLED SSD13xx screens present!
+ * The probe also figures out which devices are actually connected, instantiating
+ * a driver instance if they're present, else skipping them (we do so via a simple
+ * I2C communication with the device on the DT-provided I2C bus#:addr; if it fails,
+ * we understand that the device isn't physically connected, else it is).
+ *
+ * Uses DT overlay:
+ * - TI BeaglePlay: oled_ssd13xx_bgp.dtso
+ *
  * (c) Kaiwan N Billimoria, kaiwanTECH
  * License: GPL
  *
@@ -13,7 +25,7 @@
  *  [ ] clear curr row
  */
 #define pr_fmt(fmt) "%s:%s(): " fmt, KBUILD_MODNAME, __func__
-#define dev_fmt(fmt) "%s(): " fmt, __func__
+//#define dev_fmt(fmt) "%s(): " fmt, __func__
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -35,22 +47,16 @@ MODULE_AUTHOR("EmbeTronicX,Subhrajyoti S,Kaiwan N Billimoria");
 MODULE_DESCRIPTION("SSD1306 OLED display simple I2C driver (with custom font)");
 MODULE_LICENSE("GPL");
 
-/* Module parameters */
-static int i2cbus = -1;
-module_param(i2cbus, int, 0600);
-MODULE_PARM_DESC(i2cbus, "I2C bus # to use:\n"
-"Set to 1	For the Raspberry Pi boards     -OR-"
-"	For the TI BeaglePlay connected via a Grove connector\n"
-"Set to 3	For the TI BeaglePlay connected via the MikroBUS connector");
-
 #define SLAVE_DEVICE_NAME   "oled_ssd1306"	// Device and Driver Name
 #define SSD1306_SLAVE_ADDR   0x3C	// SSD1306 OLED Slave Address
 
 #define CMD	(true)
 #define DATA	(false)
 
-static struct i2c_adapter *oled_i2c_adapter;	// I2C adapter Structure
-static struct i2c_client *i2c_client_oled;	// I2C client Structure (the SSD1306 OLED)
+struct ssd13xx_data {
+	struct i2c_client *client;
+//	bool inuse;
+};
 static DEFINE_MUTEX(mtx);
 
 /*
@@ -59,13 +65,13 @@ static DEFINE_MUTEX(mtx);
  *      buff -> buffer to be sent
  *      len  -> Length of the data
  */
-static int I2C_Write(unsigned char *buf, unsigned int len)
+static int I2C_Write(struct i2c_client *client, unsigned char *buf, unsigned int len)
 {
 	/*
 	 * Sending Start condition, Slave address with R/W bit,
 	 * ACK/NACK and Stop condtions will be handled internally.
 	 */
-	int ret = i2c_master_send(i2c_client_oled, buf, len);
+	int ret = i2c_master_send(client, buf, len);
 	return ret;
 }
 
@@ -96,7 +102,7 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
  *                DATA (Bool false) => data
  *      data   -> the data item to be written
  */
-static void SSD1306_Write(bool is_cmd, unsigned char data)
+static void SSD1306_Write(struct i2c_client *client, bool is_cmd, unsigned char data)
 {
 	unsigned char buf[2] = { 0 };
 
@@ -123,35 +129,37 @@ static void SSD1306_Write(bool is_cmd, unsigned char data)
 	else
 		buf[0] = 0x40;
 	buf[1] = data;
-	I2C_Write(buf, 2);
+	I2C_Write(client, buf, 2);
 }
 
 /*
  * This function sends the commands that need to used to Initialize the OLED.
  */
-static int SSD1306_DisplayInit(void)
+static int SSD1306_DisplayInit(struct i2c_client *client)
 {
+	//struct i2c_client *client = i2c_get_clientdata(priv);
+
 	msleep(100);		// delay
 
 	/*
 	 * Commands to initialize the SSD_1306 OLED Display
 	 */
-	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
-	SSD1306_Write(CMD, 0xD5);	// Set Display Clock Divide Ratio and Oscillator Frequency
-	SSD1306_Write(CMD, 0x80);	// Default Setting for Display Clock Divide Ratio and Oscillator Frequency that is recommended
+	SSD1306_Write(client, CMD, 0xAE);	// Entire Display OFF
+	SSD1306_Write(client, CMD, 0xD5);	// Set Display Clock Divide Ratio and Oscillator Frequency
+	SSD1306_Write(client, CMD, 0x80);	// Default Setting for Display Clock Divide Ratio and Oscillator Frequency that is recommended
 
-	SSD1306_Write(CMD, 0xA8);	// Set Multiplex Ratio
-	SSD1306_Write(CMD, 0x3F);	// 64 COM lines
+	SSD1306_Write(client, CMD, 0xA8);	// Set Multiplex Ratio
+	SSD1306_Write(client, CMD, 0x3F);	// 64 COM lines
 
-	SSD1306_Write(CMD, 0xD3);	// Set display offset
-	SSD1306_Write(CMD, 0x00);	// 0 offset
+	SSD1306_Write(client, CMD, 0xD3);	// Set display offset
+	SSD1306_Write(client, CMD, 0x00);	// 0 offset
 
-	SSD1306_Write(CMD, 0x40);	// Set first line as the start line of the display
-	SSD1306_Write(CMD, 0x8D);	// Charge pump
-	SSD1306_Write(CMD, 0x14);	// Enable charge dump during display on
+	SSD1306_Write(client, CMD, 0x40);	// Set first line as the start line of the display
+	SSD1306_Write(client, CMD, 0x8D);	// Charge pump
+	SSD1306_Write(client, CMD, 0x14);	// Enable charge dump during display on
 
-	SSD1306_Write(CMD, 0x20);	// Set memory addressing mode
-	SSD1306_Write(CMD, 0x00);	// Horizontal addressing mode
+	SSD1306_Write(client, CMD, 0x20);	// Set memory addressing mode
+	SSD1306_Write(client, CMD, 0x00);	// Horizontal addressing mode
 	/* From datasheet:
 	 * ... In horizontal addressing mode, after the display RAM is read/written,
 	 * the column address pointer is increased automatically by 1. If the column
@@ -160,24 +168,24 @@ static int SSD1306_DisplayInit(void)
 	 * ...
 	 */
 
-	SSD1306_Write(CMD, 0xA1);	// Set segment remap with column address 127 mapped to segment 0
-	SSD1306_Write(CMD, 0xC8);	// Set com output scan direction, scan from com63 to com 0
-	SSD1306_Write(CMD, 0xDA);	// Set com pins hardware configuration
-	SSD1306_Write(CMD, 0x12);	// Alternative com pin configuration, disable com left/right remap
+	SSD1306_Write(client, CMD, 0xA1);	// Set segment remap with column address 127 mapped to segment 0
+	SSD1306_Write(client, CMD, 0xC8);	// Set com output scan direction, scan from com63 to com 0
+	SSD1306_Write(client, CMD, 0xDA);	// Set com pins hardware configuration
+	SSD1306_Write(client, CMD, 0x12);	// Alternative com pin configuration, disable com left/right remap
 
-	SSD1306_Write(CMD, 0x81);	// Set contrast control
-	SSD1306_Write(CMD, 0x80);	// Set Contrast to 128
+	SSD1306_Write(client, CMD, 0x81);	// Set contrast control
+	SSD1306_Write(client, CMD, 0x80);	// Set Contrast to 128
 
-	SSD1306_Write(CMD, 0xD9);	// Set pre-charge period
-	SSD1306_Write(CMD, 0xF1);	// Phase 1 period of 15 DCLK, Phase 2 period of 1 DCLK
+	SSD1306_Write(client, CMD, 0xD9);	// Set pre-charge period
+	SSD1306_Write(client, CMD, 0xF1);	// Phase 1 period of 15 DCLK, Phase 2 period of 1 DCLK
 
-	SSD1306_Write(CMD, 0xDB);	// Set Vcomh deselect level
-	SSD1306_Write(CMD, 0x20);	// Vcomh deselect level ~ 0.77 Vcc
+	SSD1306_Write(client, CMD, 0xDB);	// Set Vcomh deselect level
+	SSD1306_Write(client, CMD, 0x20);	// Vcomh deselect level ~ 0.77 Vcc
 
-	SSD1306_Write(CMD, 0xA4);	// Entire display ON, resume to RAM content display
-	SSD1306_Write(CMD, 0xA6);	// Set Display in Normal Mode, 1 = ON, 0 = OFF
-	SSD1306_Write(CMD, 0x2E);	// Deactivate scroll
-	SSD1306_Write(CMD, 0xAF);	// Display ON in normal mode
+	SSD1306_Write(client, CMD, 0xA4);	// Entire display ON, resume to RAM content display
+	SSD1306_Write(client, CMD, 0xA6);	// Set Display in Normal Mode, 1 = ON, 0 = OFF
+	SSD1306_Write(client, CMD, 0x2E);	// Deactivate scroll
+	SSD1306_Write(client, CMD, 0xAF);	// Display ON in normal mode
 
 	return 0;
 }
@@ -189,14 +197,14 @@ static int SSD1306_DisplayInit(void)
  *      data  -> Data to be filled in the OLED
  *
  */
-static void SSD1306_Fill(unsigned char data)
+static void SSD1306_Fill(struct i2c_client *client, unsigned char data)
 {
 	unsigned int total = 128 * 8;	// 8 pages x 128 segments x 8 bits of data
 	unsigned int i = 0;
 
 	// Fill the Display
 	for (i = 0; i < total; i++)
-		SSD1306_Write(DATA, data);
+		SSD1306_Write(client, DATA, data);
 }
 
 // Pretty horizontal lines all in same col increasing lengths!
@@ -270,11 +278,11 @@ static inline u8 setup_str_to_display(const char *buf, size_t len)
 	return centre_pos(len);
 }
 
-#define	CLEAR_ROW(ROW)  do {  \
+#define	CLEAR_ROW(client, ROW)  do {  \
 	int j;  \
-	START_POS_SMALL_LETTERS(0, (ROW));  \
+	START_POS_SMALL_LETTERS(client, 0, (ROW));  \
 	for (j = 0; j < MAX_COL+1; j++)  \
-		SSD1306_Write(DATA, 0x00);  \
+		SSD1306_Write(client, DATA, 0x00);  \
 } while (0)
 
 
@@ -308,6 +316,7 @@ static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_
 		25, // for char 8
 		25, // for char 9
 	};
+	struct i2c_client *client = to_i2c_client(dev);
 #define X_COL_FOR_C	98
 //#define X_COL_FOR_H	80
 #define ROW_FOR_PERIOD	 6
@@ -340,12 +349,12 @@ static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_
 	pr_debug("buf=%s len=%zu\n", buf, count);
 
 	for (i = 2; i <= 6; i++)
-		CLEAR_ROW(i);
+		CLEAR_ROW(client, i);
 
 	for (i = 0; i < count; i++) {
 		switch (buf[i]) {
 		case '0':
-			DIGIT_0(X, Y);
+			DIGIT_0(client, X, Y);
 			  /* Use a dynamic X (col) offset value; we use a table
 			   * lookup for it... idx is (buf[i]-48) as ASCII 48 is '0'
 			   */
@@ -353,43 +362,43 @@ static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_
 			//X += h_off;
 			break;
 		case '1':
-			DIGIT_1(X, Y);
+			DIGIT_1(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '2':
-			DIGIT_2(X, Y);
+			DIGIT_2(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '3':
-			DIGIT_3(X, Y);
+			DIGIT_3(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '4':
-			DIGIT_4(X, Y);
+			DIGIT_4(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '5':
-			DIGIT_5(X, Y);
+			DIGIT_5(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '6':
-			DIGIT_6(X, Y);
+			DIGIT_6(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '7':
-			DIGIT_7(X, Y);
+			DIGIT_7(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '8':
-			DIGIT_8(X, Y);
+			DIGIT_8(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '9':
-			DIGIT_9(X, Y);
+			DIGIT_9(client, X, Y);
 			X += x_offset[(int)buf[i]-48];
 			break;
 		case '.':
-			PERIOD(X, ROW_FOR_PERIOD);
+			PERIOD(client, X, ROW_FOR_PERIOD);
 			/*
 			 * Both KASAN & UBSAN detect a bug here!!
 			 * X += x_offset[(int)buf[i]-48];
@@ -404,14 +413,14 @@ static ssize_t write_largefont_rows2to6_store(struct device *dev, struct device_
 			X += 12;
 			break;
 		case 'C':
-			LETTER_C(X_COL_FOR_C, Y);
+			LETTER_C(client, X_COL_FOR_C, Y);
 			X += h_off;
 			break;
 		/* Exception: the '%' is in the small 8x8 font; at least
 		 * until we successfully render a large font ver
 		 */
 		case '%':
-			PERCENT_SMALLFONT(X+7, Y+2);
+			PERCENT_SMALLFONT(client, X+7, Y+2);
 			X += h_off;
 			break;
 #if 0
@@ -440,12 +449,12 @@ static DEVICE_ATTR_WO(write_largefont_rows2to6);
  * - OLED display is in landscape orientation
  * - 'buf' contains an ASCIIZ string (NUL-terminated)
  */
-
-static void write_string_smallfont(const char *buf, u8 x, u8 y)
+static void write_string_smallfont(struct i2c_client *client, const char *buf, u8 x, u8 y)
 {
 	int j, len = strlen(buf);
 	s8 char2write;
 
+	//dev_dbg(&client->dev, "in %s()\n", __func__);
 	if ((y < 0 || (y > MAX_ROW_PAGE)) ||
 		((x < 0) || (x >= MAX_COL-8)))
 		pr_debug("warning: exceeding row/col limits: trying to write to col %d row %d\n",
@@ -458,8 +467,8 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 		pr_debug("warning: exceeding max chars per row (%d), trying to write %d\nstr: %s\n",
 			MAXCHARS_SMALLFONT, len, buf);
 
-	CLEAR_ROW(y);
-	START_POS_SMALL_LETTERS(x, y);
+	CLEAR_ROW(client, y);
+	START_POS_SMALL_LETTERS(client, x, y);
 	for (j = 0; j < len; j++) {
 		/* ONLY consider ASCII 48 - 58 (digits 0-9),
 		 * the uppercase letters A-Z, AND whitespace char (32)
@@ -469,16 +478,18 @@ static void write_string_smallfont(const char *buf, u8 x, u8 y)
 		//pr_debug("buf = %c(%d)\n", buf[j], (int)buf[j]);
 	#if 0
 		if (char2write != ' ' && (char2write < '0' || char2write > 'Z'))
-			SSD1306_Write(DATA, 0x00);
+			SSD1306_Write(client, DATA, 0x00);
 		else
 	#endif
-			RENDER_SMALLFONT(char2write);
+			RENDER_SMALLFONT(client, char2write);
 	}
 }
 
 /*
+ * Generate the write_smallfont_to_rowN() function itself;
+ *  where N=[0..7]
  * Write the user-supplied string @buf (for @count bytes) to row @row of the
- * OLED (landscape orientation assumed).
+ * OLED, approx centred horizontally (landscape orientation assumed).
  * We ASSUME that @buf contains an ASCIIZ string (NUL-terminated)
  */
 #define WRITE_TO_ROW_FUNC(row)                                                 \
@@ -486,9 +497,12 @@ static ssize_t write_smallfont_to_row##row##_store(struct device *dev,         \
                         struct device_attribute *attr,                         \
                         const char *buf, size_t count)                         \
 {                                                                              \
+	struct i2c_client *client = to_i2c_client(dev);			       \
+	u8 x; \
 	if (mutex_lock_interruptible(&mtx))                                    \
 		return -EINTR;                                                 \
-	write_string_smallfont(buf, setup_str_to_display(buf, count), row);    \
+	x = setup_str_to_display(buf, count); \
+	write_string_smallfont(client, buf, x, row); \
 	mutex_unlock(&mtx);                                                    \
 	return count;                                                          \
 }                                                                              \
@@ -509,8 +523,8 @@ static void ssd1306_remove(struct i2c_client *client)
 static int ssd1306_remove(struct i2c_client *client)
 #endif
 {
-	SSD1306_Fill(0x00);	//fill the OLED with this data
-	SSD1306_Write(CMD, 0xAE);	// Entire Display OFF
+	SSD1306_Fill(client, 0x00);	//fill the OLED with this data
+	SSD1306_Write(client, CMD, 0xAE);	// Entire Display OFF
 #if 0
 	device_remove_file(&client->dev, &dev_attr_row_end);
 	device_remove_file(&client->dev, &dev_attr_row_start);
@@ -527,13 +541,20 @@ static int ssd1306_remove(struct i2c_client *client)
 	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row2);
 	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row1);
 	device_remove_file(&client->dev, &dev_attr_write_smallfont_to_row0);
-	pr_info("all sysfs files removed, display Off\n");
+
+	// I2C core auto-registers and unregisters the client device! don't
+	// do so manually!
+	//i2c_unregister_device(client);
+	pr_info("all sysfs files removed, display Off, device unregistered\n");
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
 	return 0;
 #endif
 }
 
+/* Macro to automate creation of the write_smallfont_to_rowN sysfs files;
+ * where N = [0..7]
+ */
 #define DEVICE_CREATE_SYSFS(row)							\
 	ret = device_create_file(&client->dev, &dev_attr_write_smallfont_to_row##row);	\
 	if (ret < 0) {									\
@@ -541,7 +562,12 @@ static int ssd1306_remove(struct i2c_client *client)
 		goto out_fail##row;							\
 	}
 
-/* The probe method of our driver */
+/* 
+ * The probe method of our driver.
+ * The really awesome thing: the kernel auto-invokes this method N times, where
+ * N is the number of OLED SSD13xx screens present!
+ * This, in turn, is setup via our DT overlay
+ */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 static int ssd1306_probe(struct i2c_client *client) 	// named as 'client' or 'dev'
 #else
@@ -550,6 +576,7 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 #endif
 {
 	int ret = 0;
+	struct ssd13xx_data *priv;
 
 	/*
 	 * first param: struct <foo>_client *client
@@ -558,7 +585,25 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	 */
 	struct device *dev = &client->dev;
 
-	dev_info(dev, "In probe! name=%s addr=0x%x\n", client->name, client->addr);
+	dev_info(dev, "Probing SSD13XX on bus %d, addr 0x%02x\n",
+                client->adapter->nr, client->addr);
+
+	// Are you really there??
+        ret = i2c_smbus_read_byte(client);
+	if (ret < 0) {
+		dev_info(dev, " Whoops, no device found on bus %d, addr 0x%02x\n",
+			client->adapter->nr, client->addr);
+                return -ENODEV;
+        }
+	else
+		dev_info(dev, " detected!\n");
+
+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+        if (!priv)
+                return -ENOMEM;
+
+	priv->client = client;  // Store THIS device's client
+	i2c_set_clientdata(client, priv);  // Link private data to this client
 
 	/*
 	 * Your work in the probe() routine:
@@ -567,11 +612,12 @@ static int ssd1306_probe(struct i2c_client *client,	// named as 'client' or 'dev
 	 *    framework, allocate memory, map I/O memory, register interrupts...
 	 * 3. When everything is ready, register the new device to the framework
 	 */
-	SSD1306_DisplayInit();
-	SSD1306_Fill(0x00);	// fill the OLED with this data
-	SSD1306_Fill(0xAB);	// fill the OLED with this data
+	SSD1306_DisplayInit(client);
+	SSD1306_Fill(client, 0x00);	// fill the OLED with this data
+	SSD1306_Fill(client, 0xAB);	// fill the OLED with this data
 
-	/* Create the sysfs pseudofiles, one for each display row we can write to
+	/*
+	 * Create the sysfs pseudofiles, one for each display row we can write to
 	 * (so a total of 8 as there are 8 rows)
 	 * Well, row 0 to row 7 small 8x8 font write AND 
 	 * one sysfile entry for rows 2-6 LARGE font write (typically for the
@@ -658,8 +704,8 @@ static const struct i2c_device_id ssd1306_id[] = {
 	// f.e.: { "pcf8563", 0 },
 	{}
 };
-
 MODULE_DEVICE_TABLE(i2c, ssd1306_id);
+
 /* 2. By DT 'compatible' property : for devices on the Device Tree
  *                                 (ARM32, Aarch64, PPC, etc)
  */
@@ -673,9 +719,13 @@ static const struct of_device_id ssd1306_of_match[] = {
 	 * by a client program for device driver selection. The property value
 	 * consists of a concatenated list of null terminated strings,
 	 * from most specific to most general.
+	 *
+	 * Setting OEM to 'custom' - and not the oiginal OEM 'solomon' - precisely
+	 * so that the kernel-default fb_ssd1306 driver doesn't get matched and
+	 * loaded.
 	 */
-	{.compatible = "solomon,ssd1306"},
-	// f.e.:   { .compatible = "nxp,pcf8563" },
+	{.compatible = "custom,ssd1306"},
+	{.compatible = "custom,ssd1315"},
 	{}
 };
 MODULE_DEVICE_TABLE(of, ssd1306_of_match);
@@ -688,46 +738,29 @@ static struct i2c_driver ssd1306_driver = {
 	.driver = {
 		   .name = SLAVE_DEVICE_NAME,
 		   .owner = THIS_MODULE,
+		    .of_match_table = of_match_ptr(ssd1306_of_match),  // DT[O]
 		   },
 	.probe = ssd1306_probe,
 	.remove = ssd1306_remove,
 	.id_table = ssd1306_id,
 };
 
-/*
- * I2C Board Info strucutre
- */
-static struct i2c_board_info oled_i2c_board_info = {
-	I2C_BOARD_INFO(SLAVE_DEVICE_NAME, SSD1306_SLAVE_ADDR)
-};
-
 static int __init oled_driver_init(void)
 {
 	int ret = -1;
 
-	if (i2cbus == -1) {
-		pr_info("need to pass the 'i2cbus' module parameter\n");
-		return -EINVAL;
-	}
-	oled_i2c_adapter = i2c_get_adapter(i2cbus);
-	if (oled_i2c_adapter != NULL) {
-		i2c_client_oled =
-		    i2c_new_client_device(oled_i2c_adapter, &oled_i2c_board_info);
+	ret = i2c_add_driver(&ssd1306_driver);
+	if (ret)
+		pr_err("failed to add ssd13xx driver\n");
+	else
+		pr_info("Added ssd13xx driver\n");
 
-		if (i2c_client_oled != NULL) {
-			i2c_add_driver(&ssd1306_driver);
-			ret = 0;
-		}
-		i2c_put_adapter(oled_i2c_adapter);
-	}
-	pr_info("Loaded\n");
 	return ret;
 }
 
 static void __exit oled_driver_exit(void)
 {
-	i2c_unregister_device(i2c_client_oled);
-	i2c_del_driver(&ssd1306_driver);
+//	i2c_del_driver(&ssd1306_driver);
 	pr_info("unloaded\n");
 }
 
