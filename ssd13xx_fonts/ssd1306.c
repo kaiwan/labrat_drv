@@ -566,7 +566,8 @@ static int ssd1306_remove(struct i2c_client *client)
  * The probe method of our driver.
  * The really awesome thing: the kernel auto-invokes this method N times, where
  * N is the number of OLED SSD13xx screens present!
- * This, in turn, is setup via our DT overlay
+ * This, in turn, is setup via our DT overlay.
+ * (See Commit cdf8509)
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
 static int ssd1306_probe(struct i2c_client *client) 	// named as 'client' or 'dev'
