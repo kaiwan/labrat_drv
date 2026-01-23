@@ -168,7 +168,7 @@ endif
 	
 	dtc -@ -I dts -O dtb -o $(FNAME_DT).dtbo $(FNAME_DT).dtso
 	sudo cp $(FNAME_DT).dtbo /boot/firmware/overlays/BGP_ADXL345_I2C.dtbo
-	sudo cp $(FNAME_DT).dtbo /boot/dtbs/$(shell uname -r)/ti/overlays/BGP_ADXL345_I2C.dtbo
+#	sudo cp $(FNAME_DT).dtbo /boot/dtbs/$(shell uname -r)/ti/overlays/BGP_ADXL345_I2C.dtbo
 	# DTBO - Device Tree Blob Overlay
 nsdeps:
 	@echo -n "\e[1m\e[41m"
