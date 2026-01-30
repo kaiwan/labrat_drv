@@ -34,6 +34,7 @@
 # As well, the MYDEBUG variable (see it below) can be set to 'y' or 'n' (no being
 # the default)
 FNAME_C ?= ssd1306
+FNAME_DT ?= oled_ssd13xx
 ifeq ($(FNAME_C),)
   $(error ERROR: you Must pass the C file like this: \
   make FNAME_C=csrc-filename-without-.c target-name)
@@ -150,8 +151,9 @@ ifeq (,$(shell which dtc))
 	$(error ERROR: install the DTC compiler first)
 endif
 	@echo "--- compiles the Device Tree Blob (DTB) from the DTS (ARM/PPC/etc) ---"
-	dtc -@ -I dts -O dtb -o $(FNAME_C).dtb $(FNAME_C).dts
-	# DTBO - Device Tree Blob Overlay
+	dtc -@ -I dts -O dtb -o $(FNAME_DT).dtbo $(FNAME_DT).dtso
+	sudo cp $(FNAME_DT).dtbo /boot/firmware/overlays/
+	@echo "*** MUST UPDATE /boot/firmware/extlinux/extlinux.conf to reflect new DTBO"
 nsdeps:
 	@echo "--- nsdeps (namespace dependencies resolution; for possibly importing ns's) ---"
 	make -C $(KDIR) M=$(PWD) nsdeps
