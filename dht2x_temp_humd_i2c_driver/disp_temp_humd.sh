@@ -49,7 +49,7 @@ OLED_LARGE_ROW_TARGET=${SYSFS_OLED_PFX}/write_largefont_rows2to6
 
 (
 # Load driver as reqd
-cd ../fonts_ssd1306/ || exit 1
+cd ../ssd13xx_fonts/ || exit 1
 local OLEDDRV=ssd1306
 set +e
 
