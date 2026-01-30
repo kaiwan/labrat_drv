@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# NOTE: meant for the TI BeagleBone Black / BeaglePlay boards
+# running standard Debian
 NUM_USER_LEDS=4
 START_ULED=0
 turn_off_all_userleds()
