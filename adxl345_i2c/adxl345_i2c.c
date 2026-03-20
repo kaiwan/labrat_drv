@@ -195,7 +195,7 @@ static int adxl345_remove(struct i2c_client *client)
 
 #if 0
 /*
- * 1. By name : for platform & I2C devices
+ * By name : for platform & I2C devices
  * The <foo>_device_id structure:
  * where <foo> is typically one of:
  *  acpi_button, cnic, cpufreq, gameport, hid, i2c, ide_pci, ipmi, mbus, mmc,
@@ -211,7 +211,7 @@ static const struct i2c_device_id adxl345_id[] = {
 MODULE_DEVICE_TABLE(<foo >, adxl345_id);
 #endif
 
-/* 3. By DT 'compatible' property : for devices on the Device Tree
+/* By DT 'compatible' property : for devices on the Device Tree
  *                                 (ARM32, Aarch64, PPC, etc)
  */
 #ifdef CONFIG_OF
@@ -249,12 +249,12 @@ static struct i2c_driver adxl345_driver = {
 		   },
 	.probe = adxl345_probe,	// invoked on driver/device bind
 	.remove = adxl345_remove,	// optional; invoked on driver/device detach
-//      .id_table   = adxl345_id,
+//  .id_table = adxl345_id,
 };
 
 /*
  * Init and Cleanup ::
- * Instead of manually specifiying the init and cleanup handlers in the
+ * Instead of manually specifying the init and cleanup handlers in the
  * 'usual' manner, a lot of boilerplate is avoided (when nothing special is
  * required in the init and cleanup code paths) by using the
  *
